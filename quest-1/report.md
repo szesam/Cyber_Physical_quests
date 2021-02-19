@@ -35,7 +35,9 @@ Qualitative Criteria
 
 
 **Solution Design**
+For achieveing the purpose of the fish feeder we inplemented the timer functionality of the ESP32 along with a 14-segment Adafruit display for actively showing the remaining time until next feed, and a servo motor with a container attached that rotates 3 times to dispense the food. In order to start the timer, we ask the consumer to input a desired time in hours and minutes to schedule the feeding. For this functionality we made use of the UART IO in the esp32. 
 
+Investigative question: For setting the time interval dynamic we could use a button with a button interrump to incercept the signal and every time the user presses the button the program would stop and it would be possible to enter a new time. From here the timer would restart at this new time and continue top count down to zero. 
 
 
 # Sketches and Photos
@@ -44,6 +46,7 @@ Qualitative Criteria
 
 # Supporting Artifacts
 1. [Link to video demo](linkhere).
+2. [Link to Code](linkhere)
 
 
 # References

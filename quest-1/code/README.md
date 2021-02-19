@@ -1,8 +1,5 @@
 # Code Readme
 
-Please describe what is in your code folder and subfolders. Make it
-easy for us to navigate this space.
+For this quest we have 2 code files. The main code file named "fishtank.c" where we execute the main program. We also have a header file named "alphafonttable.h" where we store an array of alphanumeric bitmaps for each ASCII value that can be represented using the 14-segment Adafruit numeric display. 
 
-Also
-- Please provide your name and date in any code submitted
-- Indicate attributrion for any code you have adopted from elsewhere
+This code was adapted from the class examples and skills that we completed before. 
