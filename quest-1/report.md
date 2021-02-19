@@ -41,7 +41,7 @@ Investigative question: For setting the time interval dynamic we could use a but
 
 
 # Sketches and Photos
-![Alt text](images/fishfeeder.png?raw=true "Title")
+![Alt text](images/fishfeeder.jpg?raw=true "Title")
 
 ![Alt text](images/storyboard.png?raw=true "Storyboard")
 
