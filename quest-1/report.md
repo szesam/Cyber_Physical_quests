@@ -47,7 +47,7 @@ Investigative question: For setting the time interval dynamic we could use a but
 
 
 # Supporting Artifacts
-1. [Link to video demo](linkhere).
+1. [Link to video demo](https://drive.google.com/file/d/1BxoE9Q_tHpfs4o9KIZqm0-4jItm41Xhm/view?usp=sharing).
 2. [Link to Code](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-1/code/fishtank.c)
 
 
