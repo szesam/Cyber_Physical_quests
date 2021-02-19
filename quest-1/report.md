@@ -42,11 +42,12 @@ Investigative question: For setting the time interval dynamic we could use a but
 
 # Sketches and Photos
 ![Alt text](images/fishfeeder.png?raw=true "Title")
+![Alt text](images/storyboard.png?raw=true "Storyboard")
 
 
 # Supporting Artifacts
 1. [Link to video demo](linkhere).
-2. [Link to Code](linkhere)
+2. [Link to Code](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-1/code/fishtank.c)
 
 
 # References
