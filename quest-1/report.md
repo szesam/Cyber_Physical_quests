@@ -1,53 +1,54 @@
-# Quest Name
-Authors: FirstName1 LastName1, FirstName2 LastName2, FirstName3 LastName 3
+# Quest Name: Fish Feeder
+Authors: Samuel Sze, Carmen Hurtado Garcia
 
-Date: YYYY-MM-DD
------
-
-## Summary
+Date: 2021/02/19
 
 
-## Self-Assessment
+# Summary
+**Contributors:**
+Samuel | Carmen 
+-------|--------
+<img src="images/samuel.jpg" width="" height="200" /> | <img src="images/carmen.jpg" width="" height = "200" />) 
 
-### Objective Criteria
+**Self-Assessment**
+
+Objective Criteria
 
 | Objective Criterion | Rating | Max Value  | 
 |---------------------------------------------|:-----------:|:---------:|
-| Objective One |  |  1     | 
-| Objective Two |  |  1     | 
-| Objective Three |  |  1     | 
-| Objective Four |  |  1     | 
-| Objective Five |  |  1     | 
-| Objective Six |  |  1     | 
-| Objective Seven |  |  1     | 
+| Servo spins right then left three times without chatter at prescribed time intervals | 1 |  1     | 
+| Alphanumeric display indicates hourss and minutes | 1 |  1     | 
+| Display shows countdown time report every second with no time loss | 1 |  1     | 
+| Food dispensed at specified time and report submitted in team folder with all required components | 1  |  1     | 
+| Investigative question response | 1 |  1     | 
 
 
-### Qualitative Criteria
+Qualitative Criteria
+
 
 | Qualitative Criterion | Rating | Max Value  | 
 |---------------------------------------------|:-----------:|:---------:|
-| Quality of solution |  |  5     | 
-| Quality of report.md including use of graphics |  |  3     | 
-| Quality of code reporting |  |  3     | 
-| Quality of video presentation |  |  3     | 
+| Quality of solution | 5 |  5     | 
+| Quality of report.md including use of graphics | 3 |  3     | 
+| Quality of code reporting | 3 |  3     | 
+| Quality of video presentation | 3 |  3     | 
 
 
-## Solution Design
+**Solution Design**
 
 
 
-## Sketches and Photos
-<center><img src="./images/ece444.png" width="25%" /></center>  
-<center> </center>
+# Sketches and Photos
+![Alt text](images/fishfeeder.png?raw=true "Title")
 
 
-## Supporting Artifacts
-- [Link to video demo](). Not to exceed 120s
+# Supporting Artifacts
+1. [Link to video demo](linkhere).
 
 
-## Modules, Tools, Source Used Including Attribution
-
-## References
-
+# References
+1. [EC444 Git](https://github.com/BU-EC444/code-examples).
+2. [Adafruit ESP-IDF Pinouts](https://learn.adafruit.com/adafruit-huzzah32-esp32-feather/pinouts)
+3. [Adafruit 14-pin Alphanumeric Pinouts](https://learn.adafruit.com/14-segment-alpha-numeric-led-featherwing/usage#library-reference-4-14)
 -----
 
