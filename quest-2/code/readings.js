@@ -11,7 +11,6 @@ const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
 //global variable to store serial input data
 var all_data = []; 
-var formatted_data = [];
 
 //open port 
 port.on('open', () => {
@@ -28,18 +27,7 @@ parser.on('data', data => {
 //console.log(all_data);
 
 //function to get data into right format
-function create_data() {
-    //manipulate all_data here 
-    var lines = all_data.split(/\r?\n/);
-    var values = [];
-    for(var i = 0; i < lines.length; i++){
-        values = lines.split('\t');
-        formatted_data.push({
-            "Sensor": values[0],
-            "Measurement": values[1]	
-        });
-    }
- } 
+
  console.log("AFTER FORMAT");
  console.log(formatted_data);
 
@@ -49,15 +37,16 @@ const csvWriter = createCsvWriter({
   path: 'out.csv',
   //create header fields
   header: [
-    {id: 'sensor', title: 'Sensor'},
-    //{id: 'Output Voltage', title: 'Output Voltage'},
-    {id: 'Measurement', title: 'Measurement'},
+    {id: 'voltage', title: 'Voltage'},
+    {id: 'Thermistor', title: 'Thermistor'},
+    {id: 'Ultrasonic', title: 'Ultrasonic'},
+    {id: 'IR', title: 'IR'},
   ]
 });
 
 //need to change this read data from serial port and fill in values after 
 //fromat all_data variable with this format, then just do data = all_data
-const data = formatted_data;//[
+const data = all_data;//[
 //   {
 //     name: 'John',
 //     surname: 'Snow',
