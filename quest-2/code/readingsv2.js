@@ -14,7 +14,7 @@ const parser = port.pipe(new Readline({ delimiter: '\n'}));
 
 var fs = require("fs");
 var stream;
-stream = fs.createWriteStream("out.txt");
+stream = fs.createWriteStream("out.csv");
 stream.write("Voltage, Thermistor, Ultrasonic, IR\n")
 var all_data = []; 
 
