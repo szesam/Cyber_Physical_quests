@@ -29,7 +29,7 @@ parser.on('data', data => {
 //function to get data into right format
 
  console.log("AFTER FORMAT");
- console.log(formatted_data);
+ console.log(all_data);
 
 
 const csvWriter = createCsvWriter({
