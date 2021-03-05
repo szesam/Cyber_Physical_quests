@@ -10,7 +10,7 @@ Samuel | Carmen
 -------|--------
 <img src="images/samuel.jpg" width="" height="200" /> | <img src="images/carmen.jpg" width="" height = "200" />) 
 
-In this quest we are asked to read analog signals from 3 different sensors and to display the results in an organized and readable way. For this we wired up a Thermistor, Ultrsonic sensor, and IR sensor to the ESPR32 board. The sensors are each connected to their own analog input pin from where we read in voltage and convert to engineering units (Celsius for the Thermistor and Meters for the two distance sensors). Using node.js and CanvasJS, we created a web server to display in real time, updating every 1 second, the readings from the ESP32 serial port. These are also returned back to the user in the console in real time every 1 second. 
+In this quest we are asked to read analog signals from 3 different sensors and to display the results in an organized and readable way. For this we wired up a Thermistor, Ultrsonic sensor, and IR sensor to the ESPR32 board. The sensors are each connected to their own analog input pin where we read in voltage and convert it to engineering units (Celsius for the Thermistor and Meters for the two distance sensors). Following that, using node.js and CanvasJS, we created a web server to display data from the ESP32 serial port in real time updating every 1 second. These are also returned back to the user in the console in real time every 1 second and saved to a csv file. 
 
 ### Investigative question: 
 Measurements taken by us.
@@ -34,9 +34,11 @@ Measurements taken by us.
 |100cm | 86cm| 
 |135cm | 108cm|  
 
-From this results, we get a brief idea of the accuracy of our sensors. The IR sensor tends to be more accurate overall whithin its range. For this we think that this sensor would perform better if used in a robotic car. 
+From these results, we get a brief idea of the accuracy of our sensors. The IR sensor tends to be more accurate overall whithin its range. For this we think that this sensor would perform better if used in a robotic car. 
 
-
+Some other considerations include:
+1. Environment: IR sensors are sensitive to other type of light sources. Ultrasonic sensors might not function in areas where there are other ultrasonic frequencies around (interference).
+2. Target material: Accuracy of ultrasonic sensors depend on the acoustic impedence between the travelling medium and the target material. If the target material has acoustic impedence matching that of the travelling medium, the sensor might not detect the distance very well. 
 
 ## Self-Assessment
 ### Objective Criteria
@@ -72,12 +74,17 @@ We have 3 different analog pins to connect each sensor and read in an output vol
 
 Overall architecture:
 1. Data is read through the ESP32 pins and controlled via sensor.c. 
-2. Node.js program. This program reads in the data using the serialport module and builds a web server using socket.io to display data in current time at intervals of 1 second. In the web server, the data is displayed in two charts. One chart shows the distance vs time values from both the IR and Ultrasonic; the second chart displays the temperature vs time. To compare the results with the output voltage read, we show in the top left corner the changing output values every 1 second. 
+2. Node.js program (index.js) reads in the data using the serialport module and builds a web server using socket.io to display data in current time at intervals of 1 second. It also prints data to the console terminal and saves the data into a csv file in real-time.
+3. In the web server (index.html) the data is displayed in two charts. One chart shows the distance vs time values from both the IR and Ultrasonic; the second chart displays the temperature vs time. To compare the results with the output voltage read, we show in the top left corner the changing output values.
 
 ## Sketches and Photos
-<img src="images/board1.jpg" width="" height="" />
+<img src="images/storyboard1.png" width="500" height="" />
 
-<img src="images/storyboard1.png" width="" height="" />
+<img src="images/board1.jpg" width="500" height="" />
+
+<img src="images/console.png" width="500" height="" />
+
+<img src="images/graph.png" width="" height="" />
 
 ## Supporting Artifacts
 - [Link to video demo](). Not to exceed 120s
