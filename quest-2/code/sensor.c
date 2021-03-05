@@ -113,10 +113,10 @@ uint32_t find_voltage()
     }
     adc_reading /= NO_OF_SAMPLES; // find adc_reading average
     //Convert adc_reading to voltage in mV
-    double voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
+    float voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
     // printf("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
     // vTaskDelay(pdMS_TO_TICKS(1000)); //delay 1s. 
-    return (uint32_t)voltage;
+    return voltage;
 }
 uint32_t find_temperature()
 {
@@ -135,15 +135,15 @@ uint32_t find_temperature()
     }
     adc_reading /= NO_OF_SAMPLES; // find adc_reading average
     //Convert adc_reading to voltage in mV
-    uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
+    float voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
     // find resistance over thermistor
-    double R2 = 10000 * (3300/(float)voltage-1);
+    float R2 = 10000 * (3300/voltage-1);
     // convert resistance in thermistor to temperature in celsius.
-    double logR2 = log(R2);
-    double T = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)) - 273.15;
+    float logR2 = log(R2);
+    float T = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)) - 273.15;
     // printf("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
     // vTaskDelay(pdMS_TO_TICKS(1000)); //delay 1s. 
-    return (uint32_t)T;
+    return T;
 }
 uint32_t find_distance_ultrasonic()
 {
@@ -161,17 +161,29 @@ uint32_t find_distance_ultrasonic()
     }
     adc_reading /= NO_OF_SAMPLES;
     //Convert adc_reading to voltage in mV
-    uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
-    uint32_t distance = ((double)voltage/6.4) * 25.4 / 10;
+    // double voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
+    // double distance = ((double)voltage/6.4) * 25.4 / 10;
     // printf("Raw: %d\tDistance %dmm\n", adc_reading, distance);
     // vTaskDelay(pdMS_TO_TICKS(1000));
-    return distance;
+    //calculating the voltage scaling factor 
+    float input_voltage_v = 3.3;
+    //value from data specification sheet 
+    int volts_per_inch = 512;
+    float scaling_factor_mv = (input_voltage_v/volts_per_inch)*1000;
+
+    //Convert adc_reading to voltage in mV
+    float voltage_mv = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
+    //calculate distance in inches
+    float distance_in = voltage_mv/scaling_factor_mv;
+    //change units to meters
+    float distance_m = distance_in * 0.0254;
+    return distance_m;
 }
 //helper function for find_distance_ir
 uint32_t range_finder(int voltage)
 {
     float inverse_distance = 0, c, m;
-    if (voltage <=2000 && voltage > 0.4)
+    if (voltage <=2000 && voltage > 400)
     {
         c = -0.8583691;
         m = 60085.83691;
@@ -191,13 +203,13 @@ uint32_t range_finder(int voltage)
     }
     else if (voltage > 2750)
     {
-        inverse_distance = 1/15;
+        return 0.15;
     }
-    else if (voltage <=0.4)
+    else if (voltage <=400)
     {
-        inverse_distance = 1/150;
+        return 1.5;
     }
-    return (uint32_t)1/inverse_distance;
+    return 1.0/inverse_distance;
 }
 uint32_t find_distance_ir()
 {
@@ -215,9 +227,9 @@ uint32_t find_distance_ir()
     }
     adc_reading /= NO_OF_SAMPLES;
     //Convert adc_reading to voltage in mV
-    uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
+    float voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
     // uint32_t distance = 5 * adc_reading;
-    uint32_t distance = range_finder(voltage);
+    float distance = range_finder(voltage);
     // printf("Raw: %d\tVoltage %dmV\tDistance %d cm\n", adc_reading, voltage, distance);
     // vTaskDelay(pdMS_TO_TICKS(1000));
     return distance;
@@ -230,11 +242,11 @@ void one_cycle_read()
     printf("Battery voltage (mV), temperature (C), ultrasonic distance (cm), IR distance (cm)\n");
     while(1)
     {
-        uint32_t battery_voltage = find_voltage();
-        uint32_t thermistor = find_temperature();
-        uint32_t ultrasonic = find_distance_ultrasonic();
-        uint32_t ir = find_distance_ir();
-        printf("%d, %d, %d, %d\n", battery_voltage, thermistor, ultrasonic, ir);
+        float battery_voltage = find_voltage();
+        float thermistor = find_temperature();
+        float ultrasonic = find_distance_ultrasonic();
+        float ir = find_distance_ir();
+        printf("%.2f, %.2f, %.2f, %.2f\n", battery_voltage, thermistor, ultrasonic, ir);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
