@@ -99,9 +99,9 @@ void init()
 
 
 //task functions from one_cycle_read
-uint32_t find_voltage()
+float find_voltage()
 {
-    uint32_t adc_reading = 0;
+    float adc_reading = 0.0;
     //Multisampling
     for (int i = 0; i < NO_OF_SAMPLES; i++) {
         if (unit == ADC_UNIT_1) {
@@ -120,10 +120,9 @@ uint32_t find_voltage()
     // vTaskDelay(pdMS_TO_TICKS(1000)); //delay 1s. 
     return voltage;
 }
-uint32_t find_temperature()
+float find_temperature()
 {
-    double c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
-    uint32_t adc_reading = 0;
+    float beta = 3435.0, R = 10000.0, adc_reading = 0.0;
     //Multisampling
     for (int i = 0; i < NO_OF_SAMPLES; i++) {
         if (unit == ADC_UNIT_1) {
@@ -139,15 +138,14 @@ uint32_t find_temperature()
     //Convert adc_reading to voltage in mV
     float voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
     // find resistance over thermistor
-    float R2 = 10000 * (3300/voltage-1);
+    float R0 = 10000 * (3300/voltage-1);
     // convert resistance in thermistor to temperature in celsius.
-    float logR2 = log(R2);
-    float T = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)) - 273.15;
+    float one_over_T = 1.0/298.15 + 1/beta * log(R/R0);
     // printf("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
     // vTaskDelay(pdMS_TO_TICKS(1000)); //delay 1s. 
-    return T;
+    return 1/one_over_T - 273.15;
 }
-uint32_t find_distance_ultrasonic()
+float find_distance_ultrasonic()
 {
     uint32_t adc_reading = 0;
     //Multisampling
@@ -170,7 +168,7 @@ uint32_t find_distance_ultrasonic()
     //calculating the voltage scaling factor 
     float input_voltage_v = 3.3;
     //value from data specification sheet 
-    int volts_per_inch = 512;
+    float volts_per_inch = 512;
     float scaling_factor_mv = (input_voltage_v/volts_per_inch)*1000;
 
     //Convert adc_reading to voltage in mV
@@ -182,7 +180,7 @@ uint32_t find_distance_ultrasonic()
     return distance_m;
 }
 //helper function for find_distance_ir
-uint32_t range_finder(int voltage)
+float range_finder(int voltage)
 {
     float inverse_distance = 0.0, c, m;
     if (voltage <=2000 && voltage > 400)
@@ -205,17 +203,17 @@ uint32_t range_finder(int voltage)
     }
     else if (voltage > 2750)
     {
-        return 0.15;
+        return 150;
     }
     else if (voltage <=400)
     {
-        return 1.5;
+        return 15;
     }
     return 1.0/inverse_distance;
 }
-uint32_t find_distance_ir()
+float find_distance_ir()
 {
-    uint32_t adc_reading = 0;
+    float adc_reading = 0.0;
     //Multisampling
     for (int i = 0; i < NO_OF_SAMPLES_IR; i++) {
         if (unit == ADC_UNIT_1) {
@@ -234,7 +232,7 @@ uint32_t find_distance_ir()
     float distance = range_finder(voltage);
     // printf("Raw: %d\tVoltage %dmV\tDistance %d cm\n", adc_reading, voltage, distance);
     // vTaskDelay(pdMS_TO_TICKS(1000));
-    return distance;
+    return distance/100.0;
 }
 
 //task function from app main

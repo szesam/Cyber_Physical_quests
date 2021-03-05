@@ -1,23 +1,31 @@
-# Quest Name
-Authors: Carmen Hurtado, Sameul Sze
+# Tactile Internet
+Authors: Carmen Hurtado, Samuel Sze
 
 Date: 2021-03-05
 -----
 
 ## Summary
+**Contributors:**
+Samuel | Carmen 
+-------|--------
+<img src="images/samuel.jpg" width="" height="200" /> | <img src="images/carmen.jpg" width="" height = "200" />) 
+
 In this quest we are asked to read analog signals from 3 different sensors and to display the results in an organized and readable way. For this we wired up a Thermistor, Ultrsonic sensor, and IR sensor to the ESPR32 board. The sensors are each connected to their own analog input pin from where we read in voltage and convert to engineering units (Celsius for the Thermistor and Meters for the two distance sensors). Using node.js and CanvasJS, we created a web server to display in real time, updating every 1 second, the readings from the ESP32 serial port. These are also returned back to the user in the console in real time every 1 second. 
 
-Investigative question: 
+### Investigative question: 
 Measurements taken by us.
 
-Test data: Ultrasonic
+<img src="images/measure1.jpg" width="" height="200" />
+
+**Test data: Ultrasonic**
 | Actual distance |Measured distance |
 |---------------------------------------------|:-----------:|
 |106cm | 112cm|  
 |93cm | 100cm| 
 |79cm | 87cmcm|   
 |309cm | 270cm|  
-Test data: IR
+
+**Test data: IR**
 | Actual distance |Measured distance |
 |---------------------------------------------|:-----------:|
 |63cm | 58cm|  
@@ -26,12 +34,11 @@ Test data: IR
 |100cm | 86cm| 
 |135cm | 108cm|  
 
-From this results, even tho not very extensive we get an idea of the accuracy of our sensors. The IR sensor tends to be more accurate overall whithin its range. For this we think that this sensor would perform better if used in a robotic car. 
+From this results, we get a brief idea of the accuracy of our sensors. The IR sensor tends to be more accurate overall whithin its range. For this we think that this sensor would perform better if used in a robotic car. 
 
 
 
 ## Self-Assessment
-
 ### Objective Criteria
 
 | Objective Criterion | Rating | Max Value  | 
@@ -57,18 +64,20 @@ From this results, even tho not very extensive we get an idea of the accuracy of
 
 ## Solution Design
 We have 3 different sensors:
-- Thermistor: Output voltage needs to go through a voltage divider. Sampled 50 times in a second
-- Ultrasonic Range Finder: Output voltage goes directly into analog pin; needs a 100mF capacitor to resolve noise; sampled 10 times in a second. Specs: Range (30cm - 100cm)
-- IR: Output voltage goes directly into analog pin; needs a 100mF capacitor to resolve noise; sampled 50 times in a second. Specs: Range(20cm - 150cm)
+- Thermistor: Output voltage needs to go through a voltage divider. Sampled 50 times a second. Converted into temperature using beta value and resistance over thermistor. 
+- Ultrasonic Range Finder: Output voltage goes directly into analog pin, needs a 100uF capacitor to resolve noise; sampled 10 times a second. Converted into distance using data sheet conversion specifications from MaxBotics. Specs: Range (30cm - 450cm)
+- IR: Output voltage goes directly into analog pin; needs a 100uF capacitor to resolve noise; sampled 50 times in a second. Converted into distance using data sheet graph provided by SharpIR. Specs: Range(20cm - 150cm)
 
 We have 3 different analog pins to connect each sensor and read in an output voltage in mv. This voltage is then converted to engineering units. The equations are different for each sensor. Thermistor retuns temperatur in Celsius, Both distance sensors return values in meters.
 
-This data is read through the ESP32 pinsa, and it is intersected by the node.js program. This program reads in the data using the serialport module and builds a web server using socket.io to display data in current time at intervals of 1 second. In the web server, the data is displayed in two charts. One chart shows the distance vs time values from both the IR and Ultrasonic; the second chart displays the temperature vs time. To compare the results with the output voltage read, we show in the top left corner the changing output values every 1 second. 
+Overall architecture:
+1. Data is read through the ESP32 pins and controlled via sensor.c. 
+2. Node.js program. This program reads in the data using the serialport module and builds a web server using socket.io to display data in current time at intervals of 1 second. In the web server, the data is displayed in two charts. One chart shows the distance vs time values from both the IR and Ultrasonic; the second chart displays the temperature vs time. To compare the results with the output voltage read, we show in the top left corner the changing output values every 1 second. 
 
 ## Sketches and Photos
-<center><img src="./images/ece444.png" width="25%" /></center>  
-<center> </center>
+<img src="images/board1.jpg" width="" height="" />
 
+<img src="images/storyboard1.png" width="" height="" />
 
 ## Supporting Artifacts
 - [Link to video demo](). Not to exceed 120s
