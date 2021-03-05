@@ -5,20 +5,30 @@ Date: 2021-03-05
 -----
 
 ## Summary
-In this quest we are asked to read analog signals from 3 different sensors and to display the results in an organized and readable way. For this we wired up a Thermistor, Ultrsonic sensor, and IR sensor to the ESPR32 board. The sensors are each connected to their own analog input pin from where we read in voltage and convert to engineering units (Celcius for the Thermistor and Meters for the two distance sensors). Using node.js and CanvasJS, we created a web server to display in real time, updating every 1 second, the readings from the ESP32 serial port. These are also returned back to the user in the console in real time every 1 second. 
+In this quest we are asked to read analog signals from 3 different sensors and to display the results in an organized and readable way. For this we wired up a Thermistor, Ultrsonic sensor, and IR sensor to the ESPR32 board. The sensors are each connected to their own analog input pin from where we read in voltage and convert to engineering units (Celsius for the Thermistor and Meters for the two distance sensors). Using node.js and CanvasJS, we created a web server to display in real time, updating every 1 second, the readings from the ESP32 serial port. These are also returned back to the user in the console in real time every 1 second. 
 
 Investigative question: 
-Specification data collected from the specs sheet of each sensor
+Measurements taken by us.
 
-| Ultrasonic range finder | IR range finder |
+Test data: Ultrasonic
+| Actual distance |Measured distance |
 |---------------------------------------------|:-----------:|
-| Range: 30cm to 430cm | Range: 20cm to 150cm|  
-| After some testing: deviation of ----- of the actual | After some testing: deviation of ----- of the actual|  
-|  | |  
-| | |  
-|  |  |  
-|  |  |  
-|  | |  
+|106cm | 112cm|  
+|93cm | 100cm| 
+|79cm | 87cmcm|   
+|309cm | 270cm|  
+Test data: IR
+| Actual distance |Measured distance |
+|---------------------------------------------|:-----------:|
+|63cm | 58cm|  
+|49cm | 45cm| 
+|30cm | 28cmcm|   
+|100cm | 86cm| 
+|135cm | 108cm|  
+
+From this results, even tho not very extensive we get an idea of the accuracy of our sensors. The IR sensor tends to be more accurate overall whithin its range. For this we think that this sensor would perform better if used in a robotic car. 
+
+
 
 ## Self-Assessment
 
