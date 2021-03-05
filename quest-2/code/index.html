@@ -4,19 +4,32 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
    <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
-  <div id="chartContainer" style="height: 360px; width: 100%;"></div>
+  <!-- <div id="chartContainer1" style="height: 300px; width: 90%;"></div>
+  <div id="chartContainer2" style="height: 300px; width: 90%;"></div>  -->
+  <div class="boxed">
+    <div id="voltage" style="font-size: 40px;"></div> 
+  </div>
+  <div id="chartContainer1" style="width: 45%; height: 360px;display: inline-block;"></div> 
+  <div id="chartContainer2" style="width: 45%; height: 360px;display: inline-block;"></div><br/>
   <script>
     $(function () {
     var socket = io();
     
-    socket.on('dataMsg', function(chartOptions){
-      var chart = new CanvasJS.Chart("chartContainer", chartOptions);
-      chart.render();
+    socket.on('dataMsg1', function(chartOptions1){
+      var chart1 = new CanvasJS.Chart("chartContainer1", chartOptions1);
+      chart1.render();
+    });
+    socket.on('dataMsg2', function(chartOptions2){
+      var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
+      chart2.render();
+    });
+    socket.on('dataMsg3', function(voltage){
+      //document.getElementById('voltage').innerHTML = ""; 
+      document.getElementById('voltage').innerHTML = 'Voltage: ' + voltage;
     });
 
   });
   </script> 
-
   </body>
 </html>
 

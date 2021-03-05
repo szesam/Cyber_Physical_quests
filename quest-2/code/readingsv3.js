@@ -21,7 +21,7 @@ const Readline = require('@serialport/parser-readline');
 var stream = fs.createWriteStream("out.csv");
 stream.write("Voltage, Thermistor, Ultrasonic, IR\n")
 //create a new serial port connection to my port 
-const port = new SerialPort('COM3',{baudRate: 9600});
+const port = new SerialPort('/dev/cu.SLAB_USBtoUART',{baudRate: 9600});
 
 //create a parser to read in the data 
 const parser = port.pipe(new Readline({ delimiter: '\n'}));
@@ -41,10 +41,12 @@ function push_sensor_data(data)
     data = data.split(",");
     // console.log(data[3]);
     i++
-    voltage.push({
-		x: parseInt(i),
-		y: parseInt(data[0])
-	});
+    // voltage.push(
+	// 	//x: parseInt(i),
+	// 	//y: parseInt(data[0])
+	// 	data[0]
+	// );
+	voltage = data[0];
 	temp.push({
 		x: parseInt(i),
 		y: parseInt(data[1])
@@ -57,9 +59,9 @@ function push_sensor_data(data)
 		x: parseInt(i),
 		y: parseInt(data[3])
 	});
-    if (voltage.length > 30) //number of data poitns visible at any time
+    if (temp.length > 15) //number of data poitns visible at any time
     {
-        voltage.shift();
+        //voltage.shift();
         temp.shift();
         ultra.shift();
         infrared.shift();
@@ -76,33 +78,16 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 // chart format
-  var chartOptions = {
+  var chartOptions1 = {
 	title:{
-		text: "Sensor data"
+		text: "Distance Sensor data"
 	},
 	axisX: {
 		Prefix: "Seconds",
+		title: "Time(sec)",
 		interval: 1
 	},
-	axisY:[{
-		title: "Voltage",
-		lineColor: "#C24642",
-		tickColor: "#C24642",
-		labelFontColor: "#C24642",
-		titleFontColor: "#C24642",
-		includeZero: true,
-		suffix: "mV"
-	},
-	{
-		title: "Temperature",
-		lineColor: "#369EAD",
-		tickColor: "#369EAD",
-		labelFontColor: "#369EAD",
-		titleFontColor: "#369EAD",
-		includeZero: true,
-		suffix: "C"
-	}],
-	axisY2: {
+	axisY: {
 		title: "Distance",
 		lineColor: "#7F6084",
 		tickColor: "#7F6084",
@@ -113,32 +98,64 @@ app.get('/', function(req, res){
 	},
 	legend: {
 		cursor: "pointer",
-		// itemclick: function (e) {
-		// 	console.log("legend click: " + e.dataPointIndex);
-		// 	console.log(e);
-		// 	if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
-		// 		e.dataSeries.visible = false;
-		// 	} else {
-		// 		e.dataSeries.visible = true;
-		// 	}
-		// },
 		verticalAlign: "bottom",
 		horizontalAlign: "center",
 		dockInsidePlotArea: true,
-		// itemclick: toogleDataSeries
 	},
 	toolTip: {
 		shared: true
 	},
-	data: [{
-		name: "voltage",
+	data: [
+	{
+		name: "ultrasonic distance",
 		type: "spline",
-		color: "#C24642",
-		yValueFormatString: "####mV",
+		color: "#7F6084",
+		yValueFormatString: "####cm",
 		showInLegend: true,
-		dataPoints: voltage,
-		axisYIndex:0
+		dataPoints: ultra,
 	},
+	{
+		name: "infrared distance",
+		type: "spline",
+		markerType: "cross",
+		color: "#ff1a1a",
+		yValueFormatString: "####cm",
+		showInLegend: true,
+		dataPoints: infrared,
+	}]
+
+};
+
+//second chart with temperature sensor
+var chartOptions2 = {
+	title:{
+		text: "Temperature Sensor data"
+	},
+	axisX: {
+		Prefix: "Seconds",
+		title: "Time(sec)",
+		interval: 1
+	},
+	axisY:[
+	{
+		title: "Temperature",
+		lineColor: "#369EAD",
+		tickColor: "#369EAD",
+		labelFontColor: "#369EAD",
+		titleFontColor: "#369EAD",
+		includeZero: true,
+		suffix: "C"
+	}],
+	legend: {
+		cursor: "pointer",
+		verticalAlign: "bottom",
+		horizontalAlign: "center",
+		dockInsidePlotArea: true,
+	},
+	toolTip: {
+		shared: true
+	},
+	data: [
 	{
 		name: "temperature",
 		type: "spline",
@@ -148,36 +165,22 @@ app.get('/', function(req, res){
 		dataPoints: temp,
 		axisYIndex:1
 	},
-	{
-		name: "ultrasonic distance",
-		type: "spline",
-		color: "#7F6084",
-		yValueFormatString: "####cm",
-		showInLegend: true,
-		dataPoints: ultra,
-		axisYType:"secondary"
-	},
-	{
-		name: "infrared distance",
-		type: "spline",
-		markerType: "cross",
-		color: "#7F6084",
-		yValueFormatString: "####cm",
-		showInLegend: true,
-		dataPoints: infrared,
-		axisYType:"secondary"
-	}]
+	]
 
 };
 // emit data every 1second
 setInterval(function(){
-	io.emit('dataMsg', chartOptions);
+	io.emit('dataMsg1', chartOptions1);
+	io.emit('dataMsg2', chartOptions2);
+	io.emit('dataMsg3',	voltage);
  }, 1000);
 
 //socket io creation. 
 io.on('connection', function(socket){
 	console.log('a user connected');
-    io.emit('dataMsg', chartOptions);
+	io.emit('dataMsg1', chartOptions1);
+	io.emit('dataMsg2', chartOptions2);
+	io.emit('dataMsg3', voltage);
 });
 
 // keep channel open.
