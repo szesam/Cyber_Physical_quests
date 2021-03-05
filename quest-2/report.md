@@ -87,10 +87,10 @@ Overall architecture:
 <img src="images/graph.png" width="" height="" />
 
 ## Supporting Artifacts
-- [Link to video demo](). Not to exceed 120s
-- [Link to .c code file]()
-- [Link to .js code file]()
-- [Link to .html code file]()
+- [Link to video demo]()
+- [Link to .c code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/sensor.c)
+- [Link to .js code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/index.js)
+- [Link to .html code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/index.html)
 
 
 ## Modules, Tools, Source Used Including Attribution
@@ -102,8 +102,8 @@ Overall architecture:
 - CanvasJS 
 
 ## References
-- [Ultrasonic sensor spec sheet]()
-- [IR sensor spec sheet]()
-- [Thermistor sensor spec sheet]()
+- [Ultrasonic sensor spec sheet](https://www.maxbotix.com/documents/HRLV-MaxSonar-EZ_Datasheet.pdf)
+- [IR sensor spec sheet](https://www.sparkfun.com/datasheets/Sensors/Infrared/gp2y0a02yk_e.pdf)
+- [Thermistor sensor spec sheet](https://www.eaa.net.au/PDF/Hitech/MF52type.pdf)
 -----
 
