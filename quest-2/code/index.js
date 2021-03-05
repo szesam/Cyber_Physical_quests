@@ -1,3 +1,7 @@
+/*Carmen Hurtado and Samuel Sze 03-05-2021 
+EC444 Quest 2: Tactile Internet
+*/
+
 //Declare fs, http, express and socket io for graphing
 var app = require('express')();
 var http = require('http').Server(app);
@@ -39,13 +43,7 @@ var i = 0;
 function push_sensor_data(data)
 {
     data = data.split(",");
-    // console.log(data[3]);
     i++
-    // voltage.push(
-	// 	//x: parseInt(i),
-	// 	//y: parseInt(data[0])
-	// 	data[0]
-	// );
 	voltage = data[0];
 	temp.push({
 		x: parseInt(i),
@@ -61,7 +59,6 @@ function push_sensor_data(data)
 	});
     if (temp.length > 15) //number of data poitns visible at any time
     {
-        //voltage.shift();
         temp.shift();
         ultra.shift();
         infrared.shift();
@@ -77,7 +74,7 @@ var io = require('socket.io')(http);
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
-// chart format
+// first chart format
   var chartOptions1 = {
 	title:{
 		text: "Distance Sensor data"
