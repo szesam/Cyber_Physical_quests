@@ -1,4 +1,7 @@
-///Objective: Slot in all 4 modules
+/*Carmen Hurtado and Samuel Sze 03-05-2021 
+EC444 Quest 2: Tactile Internet
+Code adapted from ESP-IDF example for ADC*/
+
 //Standard C library
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,13 +23,6 @@
 
 // init atten variables
 static esp_adc_cal_characteristics_t *adc_chars;
-// #if CONFIG_IDF_TARGET_ESP32
-// static const adc_channel_t channel = ADC_CHANNEL_6;     //GPIO34 if ADC1, GPIO14 if ADC2
-// static const adc_bits_width_t width = ADC_WIDTH_BIT_12; //10bit width for ez conversion. 
-// #elif CONFIG_IDF_TARGET_ESP32S2
-// static const adc_channel_t channel = ADC_CHANNEL_6;     // GPIO7 if ADC1, GPIO17 if ADC2
-// static const adc_bits_width_t width = ADC_WIDTH_BIT_13;
-// #endif
 static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
 
@@ -111,13 +107,10 @@ float find_voltage()
             adc2_get_raw((adc2_channel_t)channel1, ADC_WIDTH_BIT_12, &raw);
             adc_reading += raw;
         }
-        // vTaskDelay(pdMS_TO_TICKS(100)); //100ms delay - sample 10 -> report every 1s
     }
     adc_reading /= NO_OF_SAMPLES; // find adc_reading average
     //Convert adc_reading to voltage in mV
     float voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
-    // printf("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
-    // vTaskDelay(pdMS_TO_TICKS(1000)); //delay 1s. 
     return voltage;
 }
 float find_temperature()
@@ -132,7 +125,6 @@ float find_temperature()
             adc2_get_raw((adc2_channel_t)channel2, ADC_WIDTH_BIT_12, &raw);
             adc_reading += raw;
         }
-        // vTaskDelay(pdMS_TO_TICKS(100)); //100ms delay - sample 10 -> report every 1s
     }
     adc_reading /= NO_OF_SAMPLES; // find adc_reading average
     //Convert adc_reading to voltage in mV
@@ -141,8 +133,6 @@ float find_temperature()
     float R0 = 10000 * (3300/voltage-1);
     // convert resistance in thermistor to temperature in celsius.
     float one_over_T = 1.0/298.15 + 1/beta * log(R/R0);
-    // printf("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
-    // vTaskDelay(pdMS_TO_TICKS(1000)); //delay 1s. 
     return 1/one_over_T - 273.15;
 }
 float find_distance_ultrasonic()
@@ -157,14 +147,8 @@ float find_distance_ultrasonic()
             adc2_get_raw((adc2_channel_t)channel3, ADC_WIDTH_BIT_10, &raw);
             adc_reading += raw;
         }
-        // vTaskDelay(pdMS_TO_TICKS(100)); //sense every 100ms, 20 samples -> 2s intervals
     }
     adc_reading /= NO_OF_SAMPLES_ULTRA;
-    //Convert adc_reading to voltage in mV
-    // double voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
-    // double distance = ((double)voltage/6.4) * 25.4 / 10;
-    // printf("Raw: %d\tDistance %dmm\n", adc_reading, distance);
-    // vTaskDelay(pdMS_TO_TICKS(1000));
     //calculating the voltage scaling factor 
     float input_voltage_v = 3.3;
     //value from data specification sheet 
@@ -230,8 +214,6 @@ float find_distance_ir()
     float voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
     // uint32_t distance = 5 * adc_reading;
     float distance = range_finder(voltage);
-    // printf("Raw: %d\tVoltage %dmV\tDistance %d cm\n", adc_reading, voltage, distance);
-    // vTaskDelay(pdMS_TO_TICKS(1000));
     return distance/100.0;
 }
 
