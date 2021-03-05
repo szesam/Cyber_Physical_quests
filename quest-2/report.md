@@ -87,7 +87,7 @@ Overall architecture:
 <img src="images/graph.png" width="" height="" />
 
 ## Supporting Artifacts
-- [Link to video demo]()
+- [Link to video demo](https://drive.google.com/file/d/1NyIUGjQWDP3dVmnvLuettt31U4cYswoj/view?usp=sharing)
 - [Link to .c code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/sensor.c)
 - [Link to .js code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/index.js)
 - [Link to .html code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/index.html)
