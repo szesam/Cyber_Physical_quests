@@ -14,7 +14,9 @@
 #include "esp_adc_cal.h"
 
 #define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
-#define NO_OF_SAMPLES   50          //Multisampling
+#define NO_OF_SAMPLES_ULTRA   10         //Multisampling
+#define NO_OF_SAMPLES_IR   50                //Multisampling
+#define NO_OF_SAMPLES   50                //Multisampling
 
 // init atten variables
 static esp_adc_cal_characteristics_t *adc_chars;
@@ -149,7 +151,7 @@ uint32_t find_distance_ultrasonic()
 {
     uint32_t adc_reading = 0;
     //Multisampling
-    for (int i = 0; i < NO_OF_SAMPLES; i++) {
+    for (int i = 0; i < NO_OF_SAMPLES_ULTRA; i++) {
         if (unit == ADC_UNIT_1) {
             adc_reading += adc1_get_raw((adc1_channel_t)channel3);
         } else {
@@ -159,7 +161,7 @@ uint32_t find_distance_ultrasonic()
         }
         // vTaskDelay(pdMS_TO_TICKS(100)); //sense every 100ms, 20 samples -> 2s intervals
     }
-    adc_reading /= NO_OF_SAMPLES;
+    adc_reading /= NO_OF_SAMPLES_ULTRA;
     //Convert adc_reading to voltage in mV
     // double voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
     // double distance = ((double)voltage/6.4) * 25.4 / 10;
@@ -182,7 +184,7 @@ uint32_t find_distance_ultrasonic()
 //helper function for find_distance_ir
 uint32_t range_finder(int voltage)
 {
-    float inverse_distance = 0, c, m;
+    float inverse_distance = 0.0, c, m;
     if (voltage <=2000 && voltage > 400)
     {
         c = -0.8583691;
@@ -215,7 +217,7 @@ uint32_t find_distance_ir()
 {
     uint32_t adc_reading = 0;
     //Multisampling
-    for (int i = 0; i < NO_OF_SAMPLES; i++) {
+    for (int i = 0; i < NO_OF_SAMPLES_IR; i++) {
         if (unit == ADC_UNIT_1) {
             adc_reading += adc1_get_raw((adc1_channel_t)channel4);
         } else {
@@ -225,7 +227,7 @@ uint32_t find_distance_ir()
         }
         // vTaskDelay(pdMS_TO_TICKS(40)); //sense every 40ms, 50 samples -> 2s intervals
     }
-    adc_reading /= NO_OF_SAMPLES;
+    adc_reading /= NO_OF_SAMPLES_IR;
     //Convert adc_reading to voltage in mV
     float voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
     // uint32_t distance = 5 * adc_reading;
