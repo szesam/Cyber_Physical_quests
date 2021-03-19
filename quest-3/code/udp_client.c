@@ -52,7 +52,7 @@
 #define EXAMPLE_ESP_WIFI_SSID      "Group_8"
 #define EXAMPLE_ESP_WIFI_PASS      "password"
 #define EXAMPLE_ESP_MAXIMUM_RETRY  10
-#define HOST_IP_ADDR "192.168.1.100"
+#define HOST_IP_ADDR "192.168.1.136"
 #define PORT 3333
 // static const char *TAG = "example";
 char *payload;
@@ -286,7 +286,7 @@ void writeRegister(uint8_t reg, uint8_t data) {
   i2c_master_start(cmd);	// 1. Start (Master write start)
   i2c_master_write_byte(cmd, ( SLAVE_ADDR << 1 ) | WRITE_BIT, ACK_CHECK_EN); // (Master write slave add + write bit)
   // wait for salve to ack
-  i2c_master_write_byte(cmd, ADXL343_REG_DEVID, ACK_CHECK_EN); // (Master write register address)
+  i2c_master_write_byte(cmd, reg, ACK_CHECK_EN); // (Master write register address)
   // wait for slave to ack
   i2c_master_write_byte(cmd, data, ACK_CHECK_DIS);// master write data 
   // wait for slave to ack
@@ -383,6 +383,15 @@ static void init()
     esp_adc_cal_value_t val_type = esp_adc_cal_characterize(unit, atten, width, DEFAULT_VREF, adc_chars);
     print_char_val_type(val_type);
 
+    // Init WIFI 
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+    wifi_init_sta();
+
     // Function to initiate i2c -- note the MSB declaration!
     i2c_master_init();
     i2c_scanner();
@@ -395,14 +404,6 @@ static void init()
     setRange(ADXL343_RANGE_2_G);
     // Enable measurements
     writeRegister(ADXL343_REG_POWER_CTL, 0x08);
-    // Init WIFI 
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-    wifi_init_sta();
 }
 
 // BELOW ARE TASKS ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -499,6 +500,7 @@ static void udp_client_task(void *pvParameters)
             float roll = calcRoll(xVal, yVal, zVal);
             float pitch = calcPitch(xVal, yVal, zVal);
             // Populate payload by reading sensor data
+            printf("%.2f, %.2f, %.2f \n", xVal, yVal, zVal);
             asprintf(&payload,"%f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f",find_voltage(), xVal, yVal, zVal, roll, pitch, find_temperature());
             //send packet(payload) through socket to udp server on raspberry pi
             int err = sendto(sock, payload, strlen(payload), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
@@ -552,5 +554,11 @@ void app_main(void)
      * examples/protocols/README.md for more information about this function.
      */
     // ESP_ERROR_CHECK(example_connect());
+    // float xVal, yVal, zVal;
+    // getAccel(&xVal, &yVal, &zVal);
+    // float roll = calcRoll(xVal, yVal, zVal);
+    // float pitch = calcPitch(xVal, yVal, zVal);
+    // Populate payload by reading sensor data
+    printf("%.2f, %.2f, %.2f \n", xVal, yVal, zVal);
     xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
 }

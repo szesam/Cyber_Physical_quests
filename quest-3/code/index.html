@@ -1,0 +1,40 @@
+<!-- Carmen Hurtado and Samuel Sze 03-05-2021 
+EC444 Quest 2: Tactile Internet
+Code adapted from ESP-IDF example for ADC -->
+
+<!doctype html>
+<html>
+  <body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
+  <!-- Box for displaying voltage -->
+  <div class="boxed">
+    <div id="voltage" style="font-size: 40px;"></div> 
+  </div>
+  <!-- Charts 1 and 2 next to each other
+  <div id="chartContainer1" style="width: 45%; height: 360px;display: inline-block;"></div> 
+  <div id="chartContainer2" style="width: 45%; height: 360px;display: inline-block;"></div><br/> -->
+  <script>
+    $(function () {
+    var socket = io();
+//    //render first chart 
+//     socket.on('dataMsg1', function(chartOptions1){
+//       var chart1 = new CanvasJS.Chart("chartContainer1", chartOptions1);
+//       chart1.render();
+//     });
+//     //render second chart
+//     socket.on('dataMsg2', function(chartOptions2){
+//       var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
+//       chart2.render();
+//     });
+    //update voltage box
+    socket.on('dataMsg3', function(voltage){
+      document.getElementById('voltage').innerHTML = 'Voltage: ' + voltage;
+    });
+
+  });
+  </script> 
+  </body>
+</html>
+
