@@ -5,6 +5,7 @@ Code adapted from ESP-IDF example for ADC -->
 <!doctype html>
 <html>
   <body>
+  <!-- <script defer src="js/demo_udp.js"></script> -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
   <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
@@ -15,27 +16,81 @@ Code adapted from ESP-IDF example for ADC -->
   <!-- Charts 1 and 2 next to each other -->
   <div id="chartContainer1" style="width: 45%; height: 360px;display: inline-block;"></div> 
   <div id="chartContainer2" style="width: 45%; height: 360px;display: inline-block;"></div><br/>
+  
   <!-- Video box  -->
   <iframe width="640" height="480" src="http://192.168.1.116/html/"></iframe>
+  
+  <!-- LED Buttons ON OFF -->
+  <form>
+    <p id = "text1">The LED is off.</p>
+    <input type="button" value="Turn LED ON" id = "input1">
+    <style>
+      #text1 {
+        position:absolute;
+        top: 80%;
+        left: 65%;
+        height: 50px;
+        font-size: 24px;
+        color: red;
+      }
+      #input1 {
+        position:absolute;
+        top: 70%;
+        left: 60%;
+        width: 25%;
+        height: 25%;
+        font-size: 24px;
+      }
+      
+      </style>
+  </form>
+  
+  
+  <!-- <input type="text" name = "ledState" value="0"> -->
+  
   <script>
-    $(function () {
     var socket = io();
-   //render first chart 
-    socket.on('dataMsg1', function(chartOptions1){
-      var chart1 = new CanvasJS.Chart("chartContainer1", chartOptions1);
-      chart1.render();
-    });
-    //render second chart
-    socket.on('dataMsg2', function(chartOptions2){
-      var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
-      chart2.render();
-    });
-    //update voltage box
-    socket.on('dataMsg3', function(voltage){
-      document.getElementById('voltage').innerHTML = 'Voltage: ' + voltage;
+    $(function () {
+    //render first chart 
+      socket.on('dataMsg1', function(chartOptions1){
+        var chart1 = new CanvasJS.Chart("chartContainer1", chartOptions1);
+        chart1.render();
+      });
+      //render second chart
+      socket.on('dataMsg2', function(chartOptions2){
+        var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
+        chart2.render();
+      });
+      //update voltage box
+      socket.on('dataMsg3', function(voltage){
+        document.getElementById('voltage').innerHTML = 'Voltage: ' + voltage;
+      });
     });
 
-  });
+    //LED toggle function
+    const button = document.querySelector('input');
+    const paragraph = document.querySelector('p');
+    
+    button.addEventListener('click', updateButton);
+    
+    function updateButton() {
+      if (button.value === 'Turn LED ON') {
+        button.value = 'Turn LED OFF';
+        
+        socket.emit('data', { 
+          buttondata: "Turn LED ON"
+        });
+
+        paragraph.textContent = 'The LED is ON';
+      } else {
+        button.value = 'Turn LED ON';
+        socket.emit('data', { 
+          buttondata: "Turn LED OFF"
+        });
+        paragraph.textContent = 'The LED is OFF';
+      }
+    }
+
   </script> 
   </body>
 </html>

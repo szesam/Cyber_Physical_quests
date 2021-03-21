@@ -2,6 +2,8 @@
 var dgram = require('dgram');
 var server = dgram.createSocket('udp4');
 var app = require('express')();
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: true })); 
 var http = require('http').Server(app);
 // initialize data structures to store sensor data
 var voltage =[], temp = [], xaccel = [], yaccel = [], zaccel = [], roll = [], pitch = [];
@@ -13,6 +15,13 @@ stream.write("Voltage(mV), Xaccel, Yaccel, Zaccel, Roll, Pitch, Thermistor(C)\n"
 //Create acknowledge packet to send back to udp_client upon message received
 const msg = Buffer.from('Acknowledged');
 
+// var msg2;
+// document.getElementById("input1").onclick = function(){
+//     msg2 = "button pressed";
+//     console.log(msg2);
+// }
+
+
 //When opening the udp socket. 
 server.on('listening', function () {
     var address = server.address();
@@ -20,8 +29,12 @@ server.on('listening', function () {
 });
 
 //when receiving a packet from udp_client (esp32)
+var remote_address;
+var remote_port;
 server.on('message', function (message, remote) {
         console.log(remote.address + ':' + remote.port +' - ' + message.toString());
+        remote_address = remote.address;
+        remote_port = remote.port;
         server.send(msg, remote.port, remote.address);
         push_sensor_data(message);
         stream.write(String(message));
@@ -82,6 +95,9 @@ var io = require('socket.io')(http);
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
+
+
+  
 
 // first chart format
 var chartOptions1 = {
@@ -182,12 +198,24 @@ setInterval(function(){
  }, 1000);
 
 //socket io creation. 
+//second message to be sent to client
+var msg2;
 io.on('connection', function(socket){
 	//console.log('a user connected');
 	io.emit('dataMsg1', chartOptions1);
 	io.emit('dataMsg2', chartOptions2);
-	io.emit('dataMsg3', voltage);
+    io.emit('dataMsg3', voltage);
+    
+    //get led state message to send back to udp_client
+    socket.on('data', function (data) {
+        // msg2 = data.buttondata;
+        msg2 = Buffer.from(data.buttondata);
+        server.send(msg2, remote_port, remote_address);
+        console.log(msg2);
+    });
 });
+
+
 
 // // keep channel open on ipaddress:3334
 http.listen(3334, function(){

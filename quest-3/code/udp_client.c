@@ -22,6 +22,11 @@
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 
+//LED Fade task
+#include "sdkconfig.h"
+#include "esp_attr.h"
+#include "driver/ledc.h"
+
 //GPIO task
 #include "driver/gpio.h"
 
@@ -32,6 +37,16 @@
 //ADXL task
 #include "driver/i2c.h"
 #include "./ADXL343.h"
+
+//LED Fade definitions
+#define LEDC_HS_TIMER          LEDC_TIMER_0
+#define LEDC_HS_MODE           LEDC_HIGH_SPEED_MODE
+#define LEDC_HS_CH0_GPIO       (12)
+#define LEDC_HS_CH0_CHANNEL    LEDC_CHANNEL_0
+#define LEDC_LS_TIMER          LEDC_TIMER_1
+#define LEDC_LS_MODE           LEDC_LOW_SPEED_MODE
+#define LEDC_TEST_DUTY         (7000) //90% Duty Cycle
+#define LEDC_TEST_FADE_TIME    (5000)
 
 // ADXL definitions
 #define I2C_EXAMPLE_MASTER_SCL_IO          22   // gpio number for i2c clk
@@ -49,10 +64,10 @@
 #define SLAVE_ADDR                         ADXL343_ADDRESS // 0x53
 
 //UDP and wifi definition
-#define EXAMPLE_ESP_WIFI_SSID      "Group_8"
-#define EXAMPLE_ESP_WIFI_PASS      "password"
+#define EXAMPLE_ESP_WIFI_SSID      "Group_13"
+#define EXAMPLE_ESP_WIFI_PASS      "smartRocket"
 #define EXAMPLE_ESP_MAXIMUM_RETRY  10
-#define HOST_IP_ADDR "192.168.1.136"
+#define HOST_IP_ADDR "192.168.1.116"
 #define PORT 3333
 // static const char *TAG = "example";
 char *payload;
@@ -145,18 +160,8 @@ void wifi_init_sta(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    esp_event_handler_instance_t instance_any_id;
-    esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &event_handler,
-                                                        NULL,
-                                                        &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        IP_EVENT_STA_GOT_IP,
-                                                        &event_handler,
-                                                        NULL,
-                                                        &instance_got_ip));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
 
     wifi_config_t wifi_config = {
         .sta = {
@@ -199,11 +204,11 @@ void wifi_init_sta(void)
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
     }
 
-    /* The event will not be processed after unregister */
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
     vEventGroupDelete(s_wifi_event_group);
 }
+
 // Utility  Functions for ADXL //////////////////////////////////////////////////////////
 
 // Utility function to test for I2C device address -- not used in deploy
@@ -360,6 +365,7 @@ dataRate_t getDataRate(void) {
 }
 ////////////////////////////////////////////////////////////////////////////////
 
+
 // Master Init ///////////////////////////////////////////////////////////
 static void init()
 {
@@ -404,10 +410,74 @@ static void init()
     setRange(ADXL343_RANGE_2_G);
     // Enable measurements
     writeRegister(ADXL343_REG_POWER_CTL, 0x08);
+
+    //initialize led 
+    //led_init();
 }
 
 // BELOW ARE TASKS ///////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// LED Fading ///////////////////////////////////////////////////////////
+void fade_up_down(int in){
+    /*
+     * Prepare and set configuration of timers
+     * that will be used by LED Controller
+     */
+    ledc_timer_config_t ledc_timer = {
+        .duty_resolution = LEDC_TIMER_13_BIT, // resolution of PWM duty
+        .freq_hz = 5000,                      // frequency of PWM signal
+        .speed_mode = LEDC_LS_MODE,           // timer mode
+        .timer_num = LEDC_LS_TIMER,            // timer index
+        .clk_cfg = LEDC_AUTO_CLK,              // Auto select the source clock
+    };
+    // Set configuration of timer0 for high speed channels
+    ledc_timer_config(&ledc_timer);
+    // Prepare and set configuration of timer1 for low speed channels
+    ledc_timer.speed_mode = LEDC_HS_MODE;
+    ledc_timer.timer_num = LEDC_HS_TIMER;
+    ledc_timer_config(&ledc_timer);
+    /*
+     * Prepare individual configuration
+     * for each channel of LED Controller
+     * by selecting:
+     * - controller's channel number
+     * - output duty cycle, set initially to 0
+     * - GPIO number where LED is connected to
+     * - speed mode, either high or low
+     * - timer servicing selected channel
+     *   Note: if different channels use one timer,
+     *         then frequency and bit_num of these channels
+     *         will be the same
+     */
+    ledc_channel_config_t ledc_channel = {
+        
+        .channel    = LEDC_HS_CH0_CHANNEL,
+        .duty       = 0,
+        .gpio_num   = LEDC_HS_CH0_GPIO,
+        .speed_mode = LEDC_HS_MODE,
+        .hpoint     = 0,
+        .timer_sel  = LEDC_HS_TIMER
+        
+    };
+
+    // Set LED Controller with previously prepared configuration
+    ledc_channel_config(&ledc_channel);
+    // Initialize fade service.
+    ledc_fade_func_install(0);
+
+    if(in == 1){
+        ledc_set_fade_with_time(ledc_channel.speed_mode,ledc_channel.channel, LEDC_TEST_DUTY, LEDC_TEST_FADE_TIME);
+        ledc_fade_start(ledc_channel.speed_mode,ledc_channel.channel, LEDC_FADE_NO_WAIT);
+    }
+    else{
+        ledc_set_fade_with_time(ledc_channel.speed_mode,ledc_channel.channel, 0, LEDC_TEST_FADE_TIME);
+        ledc_fade_start(ledc_channel.speed_mode,ledc_channel.channel, LEDC_FADE_NO_WAIT);
+    }
+    
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Battery level functions ///////////////////////////////////////////////////////////
@@ -523,6 +593,16 @@ static void udp_client_task(void *pvParameters)
                 rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
                 ESP_LOGI(TAG, "Received %d bytes from %s:", len, host_ip);
                 ESP_LOGI(TAG, "%s", rx_buffer);
+
+                //if message received is turn on LED
+                if(strcmp(rx_buffer, "Turn LED ON") == 0){
+                    fade_up_down(1);
+                }
+                //if message received is turn off LED
+                if(strcmp(rx_buffer, "Turn LED OFF") == 0){
+                    fade_up_down(0);
+                }
+
                 if (strncmp(rx_buffer, "OK: ", 4) == 0) {
                     ESP_LOGI(TAG, "Received expected message, reconnecting");
                     break;
@@ -559,6 +639,7 @@ void app_main(void)
     // float roll = calcRoll(xVal, yVal, zVal);
     // float pitch = calcPitch(xVal, yVal, zVal);
     // Populate payload by reading sensor data
-    printf("%.2f, %.2f, %.2f \n", xVal, yVal, zVal);
+    // printf("%.2f, %.2f, %.2f \n", xVal, yVal, zVal);
+    
     xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
 }
