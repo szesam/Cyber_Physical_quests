@@ -13,9 +13,14 @@ Code adapted from ESP-IDF example for ADC -->
   <div class="boxed">
     <div id="voltage" style="font-size: 40px;"></div> 
   </div>
-  <!-- Charts 1 and 2 next to each other -->
+  <!-- Box for displaying temperature -->
+  <div class="boxed">
+    <div id="temp" style="font-size: 40px;"></div> 
+  </div>
+  <!-- Charts for vibartions next to each other -->
   <div id="chartContainer1" style="width: 45%; height: 360px;display: inline-block;"></div> 
-  <div id="chartContainer2" style="width: 45%; height: 360px;display: inline-block;"></div><br/>
+  <div id="chartContainer2" style="width: 45%; height: 360px;display: inline-block;"></div>
+  <div id="chartContainer3" style="width: 45%; height: 360px;display: inline-block;"></div><br/>
   
   <!-- Video box  -->
   <iframe width="640" height="480" src="http://192.168.1.116/html/"></iframe>
@@ -45,9 +50,6 @@ Code adapted from ESP-IDF example for ADC -->
       </style>
   </form>
   
-  
-  <!-- <input type="text" name = "ledState" value="0"> -->
-  
   <script>
     var socket = io();
     $(function () {
@@ -61,9 +63,18 @@ Code adapted from ESP-IDF example for ADC -->
         var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
         chart2.render();
       });
+      //update thrid chart
+      socket.on('dataMsg3', function(chartOptions3){
+        var chart3 = new CanvasJS.Chart("chartContainer3", chartOptions3);
+        chart2.render();
+      });
       //update voltage box
-      socket.on('dataMsg3', function(voltage){
+      socket.on('dataMsg4', function(voltage){
         document.getElementById('voltage').innerHTML = 'Voltage: ' + voltage;
+      });
+      //update voltage box
+      socket.on('dataMsg5', function(temp){
+        document.getElementById('temp').innerHTML = 'Temperature: ' + temp;
       });
     });
 

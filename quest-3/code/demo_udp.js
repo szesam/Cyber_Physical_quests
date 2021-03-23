@@ -67,13 +67,9 @@ function push_sensor_data(data)
 		x: parseInt(i),
 		y: parseFloat(data[5])
     });
-    temp.push({
-		x: parseInt(i),
-		y: parseFloat(data[6])
-	});
-    if (temp.length > 15) //number of data poitns visible at any time
+	temp = data[6]
+	if (xaccel.length > 15) //number of data poitns visible at any time
     {
-        temp.shift();
         xaccel.shift();
         yaccel.shift();
         zaccel.shift();
@@ -96,13 +92,10 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
-
-  
-
-// first chart format
+// xaccel chart format
 var chartOptions1 = {
 	title:{
-		text: "Vibration data"
+		text: "Acceleration in X"
 	},
 	axisX: {
 		Prefix: "Seconds",
@@ -110,13 +103,13 @@ var chartOptions1 = {
 		interval: 1
 	},
 	axisY: {
-		title: "Distance",
+		title: "Gs",
 		lineColor: "#7F6084",
 		tickColor: "#7F6084",
 		labelFontColor: "#7F6084",
 		titleFontColor: "#7F6084",
 		includeZero: true,
-		suffix: "m",
+		suffix: "g",
 	},
 	legend: {
 		cursor: "pointer",
@@ -127,7 +120,7 @@ var chartOptions1 = {
 	toolTip: {
 		shared: true
 	},
-	data: [
+	data: 
 	{
 		name: "X acceleration",
 		type: "spline",
@@ -135,23 +128,14 @@ var chartOptions1 = {
 		yValueFormatString: "0.##m",
 		showInLegend: true,
 		dataPoints: xaccel,
-	},
-	{
-		name: "Y acceleration",
-		type: "spline",
-		markerType: "cross",
-		color: "#ff1a1a",
-		yValueFormatString: "0.##m",
-		showInLegend: true,
-		dataPoints: yaccel,
-	}]
+	}
 
 };
 
-//second chart with temperature sensor
+//chart for y accel
 var chartOptions2 = {
 	title:{
-		text: "Temperature Sensor data"
+		text: "Acceleration in Y"
 	},
 	axisX: {
 		Prefix: "Seconds",
@@ -160,13 +144,13 @@ var chartOptions2 = {
 	},
 	axisY:[
 	{
-		title: "Temperature",
+		title: "Gs",
 		lineColor: "#369EAD",
 		tickColor: "#369EAD",
 		labelFontColor: "#369EAD",
 		titleFontColor: "#369EAD",
 		includeZero: true,
-		suffix: "C"
+		suffix: "g"
 	}],
 	legend: {
 		cursor: "pointer",
@@ -177,24 +161,66 @@ var chartOptions2 = {
 	toolTip: {
 		shared: true
 	},
-	data: [
-	{
-		name: "temperature",
-		type: "spline",
-		color: "#369EAD",
-		yValueFormatString: "####C",
-		showInLegend: true,
-		dataPoints: temp,
-		axisYIndex:1
-	},
-	]
+	data: 
+		{
+			name: "Y acceleration",
+			type: "spline",
+			markerType: "cross",
+			color: "#ff1a1a",
+			yValueFormatString: "0.##m",
+			showInLegend: true,
+			dataPoints: yaccel,
+		}
 
+};
+
+//chart for zaccel
+var chartOptions3 = {
+	title:{
+		text: "Acceleration in Z"
+	},
+	axisX: {
+		Prefix: "Seconds",
+		title: "Time(sec)",
+		interval: 1
+	},
+	axisY:[
+	{
+		title: "Gs",
+		lineColor: "#369EAD",
+		tickColor: "#369EAD",
+		labelFontColor: "#369EAD",
+		titleFontColor: "#369EAD",
+		includeZero: true,
+		suffix: "g"
+	}],
+	legend: {
+		cursor: "pointer",
+		verticalAlign: "bottom",
+		horizontalAlign: "center",
+		dockInsidePlotArea: true,
+	},
+	toolTip: {
+		shared: true
+	},
+	data: 
+		{
+			name: "Z acceleration",
+			type: "spline",
+			markerType: "cross",
+			color: "#ff1a1a",
+			yValueFormatString: "0.##m",
+			showInLegend: true,
+			dataPoints: zaccel,
+		}
 };
 // emit data every 1second
 setInterval(function(){
 	io.emit('dataMsg1', chartOptions1);
 	io.emit('dataMsg2', chartOptions2);
-	io.emit('dataMsg3',	voltage);
+	io.emit('dataMsg3',	chartOptions3);
+	io.emit('dataMsg4',	voltage);
+	io.emit('dataMsg5',	temp);
  }, 1000);
 
 //socket io creation. 
@@ -204,7 +230,9 @@ io.on('connection', function(socket){
 	//console.log('a user connected');
 	io.emit('dataMsg1', chartOptions1);
 	io.emit('dataMsg2', chartOptions2);
-    io.emit('dataMsg3', voltage);
+	io.emit('dataMsg3',	chartOptions3);
+	io.emit('dataMsg4',	voltage);
+	io.emit('dataMsg5',	temp);
     
     //get led state message to send back to udp_client
     socket.on('data', function (data) {
