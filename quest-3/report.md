@@ -19,6 +19,8 @@ Following that, using node.js and udp protocols, we set up a client server conne
 
 ### Investigative question: 
 What are the steps we take to make our device and system low power?
+After some reserach we reached this paper ([A Case for Ultra Low-power Web Servers](http://none.cs.umass.edu/papers/pdf/IGCC14-greening.pdf)) on implemeting what is refered to as Green Website Hosting to reduce the power consumption of low volume web platforms. This implementation uses renewable energy sources to power the web servers or to counterbalance the energy used by the servers. 
+To make our device low power, in this case the ESP32, we can set a sleep mode to be triggered if the data ceases to change. For example we can have our device only be active during "Hurricane season" or make it more dynamic to have the capability to come out of the sleep mode if ot senses a change in the data reading. More on Sleep Mode implementation here [Sleep Mode source](https://circuitdigest.com/article/implementing-low-power-consumption-in-microcontrollers)
 
 ## Self-Assessment
 
@@ -75,16 +77,20 @@ Front End webpage
 
 ## Supporting Artifacts
 - [Link to video demo](https://youtu.be/VHqB5IZUhHE)
-- [Link to .c code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/sensor.c)
-- [Link to .js code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/index.js)
-- [Link to .html code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-2/code/index.html)
+- [Link to .c code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-3/code/udp_client.c)
+- [Link to .js code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-3/code/demo_udp.js)
+- [Link to .html code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-3/code/index.html)
 
 
 ## Modules, Tools, Source Used Including Attribution
+- ESP32
+- Raspberry Pi Zero W 
+- Raspberry Pi Zero W Camera
 - ADC
 - Thermistor
+- Accelelometer
 - i2c
-- udp
+- UDP Protocol
 - DDNS
 - PWM
 - node.js (socket.io, express, datagram)
