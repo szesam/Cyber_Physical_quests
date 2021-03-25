@@ -67,7 +67,7 @@ Front End webpage
 3. Port forwarding is done by no-ip DDNS service, forwarding the webserver from Local area network to the internet cloud. The connection is http://teamrocket.ddns.net:3000.
 
 ## Sketches and Photos
-<img src="images/storyboard1.png" width="500" height="" />
+<img src="images/storyboard.png" width="500" height="" />
 
 <img src="images/graph.png" width="" height="" />
 
