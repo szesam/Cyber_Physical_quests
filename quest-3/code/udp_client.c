@@ -1,3 +1,7 @@
+/* Samuel Sze and Carmen Hurtado for EC444 Quest3: Hurricane Box
+   03-25-2021
+   Code adapted from ESP IDF Examples and Class Repo examples*/
+
 //STD C library
 #include <string.h>
 #include <stdio.h>
@@ -46,7 +50,7 @@
 #define LEDC_LS_TIMER          LEDC_TIMER_1
 #define LEDC_LS_MODE           LEDC_LOW_SPEED_MODE
 #define LEDC_TEST_DUTY         (7000) //90% Duty Cycle
-#define LEDC_TEST_FADE_TIME    (5000)
+#define LEDC_TEST_FADE_TIME    (5000) //fade time 
 
 // ADXL definitions
 #define I2C_EXAMPLE_MASTER_SCL_IO          22   // gpio number for i2c clk
@@ -64,12 +68,12 @@
 #define SLAVE_ADDR                         ADXL343_ADDRESS // 0x53
 
 //UDP and wifi definition
-#define EXAMPLE_ESP_WIFI_SSID      "Group_8"
-#define EXAMPLE_ESP_WIFI_PASS      "password"
+#define EXAMPLE_ESP_WIFI_SSID      "Group_8"    //from personal router's configuration
+#define EXAMPLE_ESP_WIFI_PASS      "password"   //from personal router's configuration
 #define EXAMPLE_ESP_MAXIMUM_RETRY  10
-#define HOST_IP_ADDR "192.168.1.123"
-#define PORT 3333
-// static const char *TAG = "example";
+#define HOST_IP_ADDR "192.168.1.123"            //host IP address
+#define PORT 3333                               //arbitrary port
+
 char *payload;
 
 /* FreeRTOS event group to signal when we are connected*/
@@ -227,7 +231,6 @@ static void i2c_scanner() {
   printf("\n>> I2C scanning ..."  "\n");
   uint8_t count = 0;
   for (uint8_t i = 1; i < 127; i++) {
-    // printf("0x%X%s",i,"\n");
     if (testConnection(i, scanTimeout) == ESP_OK) {
       printf( "- Device found at address: 0x%X%s", i, "\n");
       count++;
@@ -376,13 +379,9 @@ static void init()
         adc1_config_width(ADC_WIDTH_BIT_12);
         adc1_config_channel_atten(channel1, atten);
         adc1_config_channel_atten(channel2, atten);
-        // adc1_config_channel_atten(channel3, atten);
-        // adc1_config_channel_atten(channel4, atten);
     } else {
         adc2_config_channel_atten((adc2_channel_t)channel1, atten);
         adc2_config_channel_atten((adc2_channel_t)channel2, atten);
-        // adc2_config_channel_atten((adc2_channel_t)channel3, atten);
-        // adc2_config_channel_atten((adc2_channel_t)channel4, atten);
     }
     //Characterize ADC
     adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
@@ -410,9 +409,6 @@ static void init()
     setRange(ADXL343_RANGE_2_G);
     // Enable measurements
     writeRegister(ADXL343_REG_POWER_CTL, 0x08);
-
-    //initialize led 
-    //led_init();
 }
 
 // BELOW ARE TASKS ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -467,10 +463,12 @@ void fade_up_down(int in){
     // Initialize fade service.
     ledc_fade_func_install(0);
 
+    //turn on led to duty clycle defined above
     if(in == 1){
         ledc_set_fade_with_time(ledc_channel.speed_mode,ledc_channel.channel, LEDC_TEST_DUTY, LEDC_TEST_FADE_TIME);
         ledc_fade_start(ledc_channel.speed_mode,ledc_channel.channel, LEDC_FADE_NO_WAIT);
     }
+    //turn on led to duty clycle 0
     else{
         ledc_set_fade_with_time(ledc_channel.speed_mode,ledc_channel.channel, 0, LEDC_TEST_FADE_TIME);
         ledc_fade_start(ledc_channel.speed_mode,ledc_channel.channel, LEDC_FADE_NO_WAIT);
@@ -570,7 +568,6 @@ static void udp_client_task(void *pvParameters)
             float roll = calcRoll(xVal, yVal, zVal);
             float pitch = calcPitch(xVal, yVal, zVal);
             // Populate payload by reading sensor data
-            // printf("%.2f, %.2f, %.2f \n", xVal, yVal, zVal);
             asprintf(&payload,"%f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f",find_voltage(), xVal, yVal, zVal, roll, pitch, find_temperature());
             //send packet(payload) through socket to udp server on raspberry pi
             int err = sendto(sock, payload, strlen(payload), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
@@ -643,23 +640,8 @@ static void udp_client_task(void *pvParameters)
 
 void app_main(void)
 {
-    //initialize battery voltage
+    //master init
     init();
-    // ESP_ERROR_CHECK(nvs_flash_init());
-    // ESP_ERROR_CHECK(esp_netif_init());
-    // ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-     * examples/protocols/README.md for more information about this function.
-     */
-    // ESP_ERROR_CHECK(example_connect());
-    // float xVal, yVal, zVal;
-    // getAccel(&xVal, &yVal, &zVal);
-    // float roll = calcRoll(xVal, yVal, zVal);
-    // float pitch = calcPitch(xVal, yVal, zVal);
-    // Populate payload by reading sensor data
-    // printf("%.2f, %.2f, %.2f \n", xVal, yVal, zVal);
     
     xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
 }

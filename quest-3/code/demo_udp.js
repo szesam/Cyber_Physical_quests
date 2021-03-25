@@ -1,16 +1,20 @@
+/*Carmen Hurtado and Samuel Sze 03-05-2021 
+EC444 Quest 3: Hurricane Box 
+Code adapted from udp server example from node js */
+
 //Create UDP datagram and server
 var dgram = require('dgram');
 var server = dgram.createSocket('udp4');
+
 var app = require('express')();
-const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: true })); 
+
 var http = require('http').Server(app);
+
 // initialize data structures to store sensor data
 var voltage =[], temp = [], xaccel = [], yaccel = [], zaccel = [], roll = [], pitch = [];
 
 //Create acknowledge packet to send back to udp_client upon message received
 const msg = Buffer.from('Acknowledged');
-
 
 //When opening the udp socket. 
 server.on('listening', function () {
@@ -19,8 +23,8 @@ server.on('listening', function () {
 });
 
 //when receiving a packet from udp_client (esp32)
-var remote_address;
-var remote_port;
+var remote_address; //store remote client's address to send additional message data
+var remote_port; //store remote client's port to send additional message data
 server.on('message', function (message, remote) {
         console.log(remote.address + ':' + remote.port +' - ' + message.toString());
         remote_address = remote.address;
@@ -28,6 +32,7 @@ server.on('message', function (message, remote) {
         server.send(msg, remote.port, remote.address);
         push_sensor_data(message);
 });
+
 // i is x-axis
 var i = 0; 
 function push_sensor_data(data)
@@ -95,10 +100,6 @@ var chartOptions1 = {
 	axisY: {
 		maximum: 2,
 		title: "Gs",
-		// lineColor: "#00FF00",
-		// tickColor: "#00FF00",
-		// labelFontColor: "#00FF00",
-		// titleFontColor: "#00FF00",
 		includeZero: true,
 		suffix: "g",
 	},
@@ -116,14 +117,13 @@ var chartOptions1 = {
 		name: "X acceleration",
 		type: "spline",
 		color: "#00FF00",
-		//yValueFormatString: "0.##m",
 		showInLegend: true,
 		dataPoints: xaccel,
 	}]
 
 };
 
-//chart for y accel
+//chart for y accel format
 var chartOptions2 = {
 	title:{
 		text: "Acceleration in Y",
@@ -138,10 +138,6 @@ var chartOptions2 = {
 	{
 		title: "Gs",
 		maximum: 2,
-		// lineColor: "#FF0000",
-		// tickColor: "#FF0000",
-		// labelFontColor: "#FF0000",
-		// titleFontColor: "#FF0000",
 		includeZero: true,
 		suffix: "g"
 	}],
@@ -160,14 +156,13 @@ var chartOptions2 = {
 			type: "spline",
 			markerType: "cross",
 			color: "#FF0000",
-			//yValueFormatString: "0.##m",
 			showInLegend: true,
 			dataPoints: yaccel,
 		}]
 
 };
 
-//chart for zaccel
+//chart for zaccel format
 var chartOptions3 = {
 	title:{
 		text: "Acceleration in Z",
@@ -182,10 +177,6 @@ var chartOptions3 = {
 	{
 		title: "Gs",
 		maximum: 2,
-		// lineColor: "#0000FF",
-		// tickColor: "#0000FF",
-		// labelFontColor: "#0000FF",
-		// titleFontColor: "#0000FF",
 		includeZero: true,
 		suffix: "g"
 	}],
@@ -204,11 +195,11 @@ var chartOptions3 = {
 			type: "spline",
 			markerType: "cross",
 			color: "#0000FF",
-			//yValueFormatString: "0.##m",
 			showInLegend: true,
 			dataPoints: zaccel,
 		}]
 };
+
 // emit data every 1second
 setInterval(function(){
 	io.emit('dataMsg1', chartOptions1);
@@ -219,8 +210,8 @@ setInterval(function(){
  }, 1000);
 
 //socket io creation. 
-//second message to be sent to client
-var msg2;
+
+var msg2;//second message to be sent to client to toggle LED 
 io.on('connection', function(socket){
 	//console.log('a user connected');
 	io.emit('dataMsg1', chartOptions1);
@@ -231,7 +222,6 @@ io.on('connection', function(socket){
     
     //get led state message to send back to udp_client
     socket.on('data', function (data) {
-        // msg2 = data.buttondata;
         msg2 = Buffer.from(data.buttondata);
         server.send(msg2, remote_port, remote_address);
         console.log(msg2);
@@ -243,4 +233,3 @@ io.on('connection', function(socket){
 // // keep channel open on ipaddress:3334
 http.listen(3334, function(){
 });
-// keep channel open.

@@ -1,20 +1,9 @@
 <!-- Carmen Hurtado and Samuel Sze 03-05-2021 
-EC444 Quest 2: Tactile Internet
-Code adapted from ESP-IDF example for ADC -->
+EC444 Quest 3: Hurricane Box -->
 
 <!doctype html>
 <html>
-  <head>
-    <meta name="viewport" content="width=550, initial-scale=1">
-    <title>RPi Cam Control v6.6.13: mycam@raspberrypi</title>
-    <link rel="stylesheet" href="css/style_minified.css">
-    <link rel="stylesheet" href="css/es_Default.css">
-    <script src="js/style_minified.js"></script>
-    <script src="js/script.js"></script>
-    <script src="js/pipan.js"></script>
- </head>
   <body>
-  <!-- <script defer src="js/demo_udp.js"></script> -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
   <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
@@ -23,15 +12,14 @@ Code adapted from ESP-IDF example for ADC -->
     <div id="voltage" ></div> 
     <div id="temp" ></div>
   </div>
-  <!-- Charts for vibartions next to each other -->
+  <!-- Charts for vibrations next to each other -->
   <div id="chartContainer1"></div> 
   <div id="chartContainer2"></div>
   <div id="chartContainer3"></div><br/>
   
-  <!-- Video box  -->
-  <iframe class="resp-iframe" src="http://169.254.46.109/html/"></iframe>
+  <!-- Video box for live camera video, src is ddns host and forwarded port -->
+  <iframe class="resp-iframe" src="http:teamrocket.ddns.net:2998"></iframe>
   
- 
   <!-- LED Buttons ON OFF -->
   <form>
     <p id = "text1">The LED is off.</p>
@@ -44,7 +32,6 @@ Code adapted from ESP-IDF example for ADC -->
       position:absolute;
       top: 1%;
       left: 70%;
-      /* margin-left: 80px; */
       height: 50px;
       font-size: 24px;
       color: red;
@@ -127,7 +114,7 @@ Code adapted from ESP-IDF example for ADC -->
     
     button.addEventListener('click', updateButton);
     
-    //should be updating button value on web page
+    //updates button value on web page
     function updateButton() {
       if (button.value === 'Turn LED ON') {
         button.value = 'Turn LED OFF';
