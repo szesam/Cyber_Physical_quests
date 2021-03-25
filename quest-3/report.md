@@ -69,10 +69,6 @@ Front End webpage
 ## Sketches and Photos
 <img src="images/storyboard1.png" width="500" height="" />
 
-<img src="images/board1.jpg" width="500" height="" />
-
-<img src="images/console.png" width="500" height="" />
-
 <img src="images/graph.png" width="" height="" />
 
 ## Supporting Artifacts
