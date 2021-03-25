@@ -7,19 +7,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 var http = require('http').Server(app);
 // initialize data structures to store sensor data
 var voltage =[], temp = [], xaccel = [], yaccel = [], zaccel = [], roll = [], pitch = [];
-//create stream to write sensor data into csv file called out.csv in same directory.
-var fs = require('fs')
-var stream = fs.createWriteStream("out.csv");
-stream.write("Voltage(mV), Xaccel, Yaccel, Zaccel, Roll, Pitch, Thermistor(C)\n")
 
 //Create acknowledge packet to send back to udp_client upon message received
 const msg = Buffer.from('Acknowledged');
-
-// var msg2;
-// document.getElementById("input1").onclick = function(){
-//     msg2 = "button pressed";
-//     console.log(msg2);
-// }
 
 
 //When opening the udp socket. 
@@ -37,7 +27,6 @@ server.on('message', function (message, remote) {
         remote_port = remote.port;
         server.send(msg, remote.port, remote.address);
         push_sensor_data(message);
-        stream.write(String(message));
 });
 // i is x-axis
 var i = 0; 
@@ -49,15 +38,15 @@ function push_sensor_data(data)
     voltage = data[0];
     xaccel.push({
 		x: parseInt(i),
-		y: parseFloat(data[1])
+		y: parseFloat(data[1]/9.81)
 	});
 	yaccel.push({
 		x: parseInt(i),
-		y: parseFloat(data[2])
+		y: parseFloat(data[2]/9.81)
 	});
 	zaccel.push({
 		x: parseInt(i),
-		y: parseFloat(data[3])
+		y: parseFloat(data[3]/9.81)
     });
     roll.push({
 		x: parseInt(i),
@@ -79,7 +68,7 @@ function push_sensor_data(data)
     }
 }
 //Bind server to PI local address on router with port at 3333
-server.bind(3333,'192.168.1.116');
+server.bind(3333,'192.168.1.110');
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // socket io script connect server to client (web browser) to display canvasjs charts.
@@ -95,7 +84,8 @@ app.get('/', function(req, res){
 // xaccel chart format
 var chartOptions1 = {
 	title:{
-		text: "Acceleration in X"
+		text: "Acceleration in X",
+		fontSize: 18,
 	},
 	axisX: {
 		Prefix: "Seconds",
@@ -103,11 +93,12 @@ var chartOptions1 = {
 		interval: 1
 	},
 	axisY: {
+		maximum: 2,
 		title: "Gs",
-		lineColor: "#7F6084",
-		tickColor: "#7F6084",
-		labelFontColor: "#7F6084",
-		titleFontColor: "#7F6084",
+		// lineColor: "#00FF00",
+		// tickColor: "#00FF00",
+		// labelFontColor: "#00FF00",
+		// titleFontColor: "#00FF00",
 		includeZero: true,
 		suffix: "g",
 	},
@@ -120,22 +111,23 @@ var chartOptions1 = {
 	toolTip: {
 		shared: true
 	},
-	data: 
+	data: [
 	{
 		name: "X acceleration",
 		type: "spline",
-		color: "#7F6084",
-		yValueFormatString: "0.##m",
+		color: "#00FF00",
+		//yValueFormatString: "0.##m",
 		showInLegend: true,
 		dataPoints: xaccel,
-	}
+	}]
 
 };
 
 //chart for y accel
 var chartOptions2 = {
 	title:{
-		text: "Acceleration in Y"
+		text: "Acceleration in Y",
+		fontSize: 18,
 	},
 	axisX: {
 		Prefix: "Seconds",
@@ -145,10 +137,11 @@ var chartOptions2 = {
 	axisY:[
 	{
 		title: "Gs",
-		lineColor: "#369EAD",
-		tickColor: "#369EAD",
-		labelFontColor: "#369EAD",
-		titleFontColor: "#369EAD",
+		maximum: 2,
+		// lineColor: "#FF0000",
+		// tickColor: "#FF0000",
+		// labelFontColor: "#FF0000",
+		// titleFontColor: "#FF0000",
 		includeZero: true,
 		suffix: "g"
 	}],
@@ -161,23 +154,24 @@ var chartOptions2 = {
 	toolTip: {
 		shared: true
 	},
-	data: 
+	data: [
 		{
 			name: "Y acceleration",
 			type: "spline",
 			markerType: "cross",
-			color: "#ff1a1a",
-			yValueFormatString: "0.##m",
+			color: "#FF0000",
+			//yValueFormatString: "0.##m",
 			showInLegend: true,
 			dataPoints: yaccel,
-		}
+		}]
 
 };
 
 //chart for zaccel
 var chartOptions3 = {
 	title:{
-		text: "Acceleration in Z"
+		text: "Acceleration in Z",
+		fontSize: 18,
 	},
 	axisX: {
 		Prefix: "Seconds",
@@ -187,10 +181,11 @@ var chartOptions3 = {
 	axisY:[
 	{
 		title: "Gs",
-		lineColor: "#369EAD",
-		tickColor: "#369EAD",
-		labelFontColor: "#369EAD",
-		titleFontColor: "#369EAD",
+		maximum: 2,
+		// lineColor: "#0000FF",
+		// tickColor: "#0000FF",
+		// labelFontColor: "#0000FF",
+		// titleFontColor: "#0000FF",
 		includeZero: true,
 		suffix: "g"
 	}],
@@ -203,16 +198,16 @@ var chartOptions3 = {
 	toolTip: {
 		shared: true
 	},
-	data: 
+	data: [
 		{
 			name: "Z acceleration",
 			type: "spline",
 			markerType: "cross",
-			color: "#ff1a1a",
-			yValueFormatString: "0.##m",
+			color: "#0000FF",
+			//yValueFormatString: "0.##m",
 			showInLegend: true,
 			dataPoints: zaccel,
-		}
+		}]
 };
 // emit data every 1second
 setInterval(function(){

@@ -4,51 +4,94 @@ Code adapted from ESP-IDF example for ADC -->
 
 <!doctype html>
 <html>
+  <head>
+    <meta name="viewport" content="width=550, initial-scale=1">
+    <title>RPi Cam Control v6.6.13: mycam@raspberrypi</title>
+    <link rel="stylesheet" href="css/style_minified.css">
+    <link rel="stylesheet" href="css/es_Default.css">
+    <script src="js/style_minified.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/pipan.js"></script>
+ </head>
   <body>
   <!-- <script defer src="js/demo_udp.js"></script> -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
   <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
-  <!-- Box for displaying voltage -->
+  <!-- Boxes for displaying voltage and temperature -->
   <div class="boxed">
-    <div id="voltage" style="font-size: 40px;"></div> 
-  </div>
-  <!-- Box for displaying temperature -->
-  <div class="boxed">
-    <div id="temp" style="font-size: 40px;"></div> 
+    <div id="voltage" ></div> 
+    <div id="temp" ></div>
   </div>
   <!-- Charts for vibartions next to each other -->
-  <div id="chartContainer1" style="width: 45%; height: 360px;display: inline-block;"></div> 
-  <div id="chartContainer2" style="width: 45%; height: 360px;display: inline-block;"></div>
-  <div id="chartContainer3" style="width: 45%; height: 360px;display: inline-block;"></div><br/>
+  <div id="chartContainer1"></div> 
+  <div id="chartContainer2"></div>
+  <div id="chartContainer3"></div><br/>
   
   <!-- Video box  -->
-  <iframe width="640" height="480" src="http://192.168.1.116/html/"></iframe>
+  <iframe class="resp-iframe" src="http://169.254.46.109/html/"></iframe>
   
+ 
   <!-- LED Buttons ON OFF -->
   <form>
     <p id = "text1">The LED is off.</p>
-    <input type="button" value="Turn LED ON" id = "input1">
-    <style>
-      #text1 {
-        position:absolute;
-        top: 80%;
-        left: 65%;
-        height: 50px;
-        font-size: 24px;
-        color: red;
-      }
-      #input1 {
-        position:absolute;
-        top: 70%;
-        left: 60%;
-        width: 25%;
-        height: 25%;
-        font-size: 24px;
-      }
-      
-      </style>
+    <input type="button" value="Turn LED ON" id = "button">
   </form>
+
+  <!-- Divs styles -->
+  <style>
+    #text1{
+      position:absolute;
+      top: 1%;
+      left: 70%;
+      /* margin-left: 80px; */
+      height: 50px;
+      font-size: 24px;
+      color: red;
+      display: inline-block;
+    }
+    #button{
+      position:absolute;
+      top: 1%;
+      left: 60%;
+      width: 7%;
+      height: 7%;
+      font-size: 13px;
+    }
+    #temp{
+      margin-left: 50px;
+      font-size: 40px; 
+      display: inline-block;
+    }
+    #voltage{
+      font-size: 40px; 
+      display: inline-block;
+    }
+    #chartContainer1{
+      margin-top: 20px;
+      width: 45%; 
+      height: 360px;
+      display: inline-block;
+    }
+    #chartContainer2{
+      margin-top: 20px;
+      width: 45%; 
+      height: 360px;
+      display: inline-block;
+    }
+    #chartContainer3{
+      width: 45%; 
+      height: 360px;
+      display: inline-block;
+    }
+    .resp-iframe{
+      position: absolute;
+      top: 54%;
+      left: 50%;
+      width:600px;
+      height:350px;
+    }
+    </style>
   
   <script>
     var socket = io();
@@ -66,15 +109,15 @@ Code adapted from ESP-IDF example for ADC -->
       //update thrid chart
       socket.on('dataMsg3', function(chartOptions3){
         var chart3 = new CanvasJS.Chart("chartContainer3", chartOptions3);
-        chart2.render();
+        chart3.render();
       });
       //update voltage box
       socket.on('dataMsg4', function(voltage){
-        document.getElementById('voltage').innerHTML = 'Voltage: ' + voltage;
+        document.getElementById('voltage').innerHTML = 'Voltage: ' + voltage + ' mV';
       });
-      //update voltage box
+      //update temp box
       socket.on('dataMsg5', function(temp){
-        document.getElementById('temp').innerHTML = 'Temperature: ' + temp;
+        document.getElementById('temp').innerHTML = 'Temperature: ' + temp + ' C';
       });
     });
 
@@ -84,6 +127,7 @@ Code adapted from ESP-IDF example for ADC -->
     
     button.addEventListener('click', updateButton);
     
+    //should be updating button value on web page
     function updateButton() {
       if (button.value === 'Turn LED ON') {
         button.value = 'Turn LED OFF';
