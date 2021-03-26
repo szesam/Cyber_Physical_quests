@@ -28,13 +28,13 @@ To make our device low power, in this case the ESP32, we can set a sleep mode to
 
 | Objective Criterion | Rating | Max Value  | 
 |---------------------------------------------|:-----------:|:---------:|
-| Objective One | 1 |  1     | 
-| Objective Two | 1 |  1     | 
-| Objective Three | 1|  1     | 
-| Objective Four | 1 |  1     | 
-| Objective Five | 1 |  1     | 
-| Objective Six | 1 |  1     | 
-| Objective Seven | 1 |  1     | 
+| Objective One: Measure accel, temp and battery level | 1 |  1     | 
+| Objective Two: Display real-time data at remote client via portal using separate IP network| 1 |  1     | 
+| Objective Three: Controls LED on box from remote client via portal | 1|  1     | 
+| Objective Four: Sources web cam video into remote client | 1 |  1     | 
+| Objective Five: ESP32 and Pi are connected wirelessly to router, ESP32 sensor data are delivered to local node server | 1 |  1     | 
+| Objective Six: Demo delivered at scheduled time and report submitted | 1 |  1     | 
+| Objective Seven: Investigative question response | 1 |  1     | 
 
 
 ### Qualitative Criteria
@@ -72,7 +72,7 @@ Front End webpage
 <img src="images/graph.png" width="" height="" />
 
 ## Supporting Artifacts
-- [Link to video demo](https://youtu.be/VHqB5IZUhHE)
+- [Link to video demo](https://youtu.be/9RcBN8nKxJE)
 - [Link to .c code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-3/code/udp_client.c)
 - [Link to .js code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-3/code/demo_udp.js)
 - [Link to .html code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-3/code/index.html)
