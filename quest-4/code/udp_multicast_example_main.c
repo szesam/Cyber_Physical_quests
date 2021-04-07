@@ -85,9 +85,10 @@ static const char *TAG_SYSTEM = "system";       // For debug logs
 
 // Variables for my ID, minVal and status plus string fragments
 char start = 0x1B;
-int myID = 2; //change this variable for each new FOB
+int myID = 1; //change this variable for each new FOB
 char myColor = (char) COLOR; //my own voting color
 char rcvColor; //recived voting color from NFC comms - only filled in when received packet
+int rcvID; //received voting ID from NFC comms - only filled in when received packet
 int len_out = 4;
 bool rcvvote = false; //only true when received a voting packet from any FOB
 
@@ -346,12 +347,52 @@ static void mcast_leader_election_task(void *pvParameters)
             else {
                 s = select(sock + 1, &rfds, NULL, NULL, &tv_non_leader);
             }
-            if (rcvvote) {
+            if (rcvvote && !iamleader) { //if i received a vote and i am not a leader, broadcast it
                 //immediately send a voting packet through UDP, will continue sending UDP packets of vote until received ack
                 const char sendfmt[] = "v%c%d\n";
                 char sendbuf[10];
                 char addrbuf[32] = { 0 };
-                int len = snprintf(sendbuf, sizeof(sendbuf), sendfmt,rcvColor,myID);
+                int len = snprintf(sendbuf, sizeof(sendbuf), sendfmt,rcvColor,rcvID);
+                if (len > sizeof(sendbuf)) {
+                    ESP_LOGE(TAG, "Overflowed multicast sendfmt buffer!!");
+                    err = -1;
+                    break;
+                }
+                struct addrinfo hints = {
+                    .ai_flags = AI_PASSIVE,
+                    .ai_socktype = SOCK_DGRAM,
+                };
+                struct addrinfo *res;
+                hints.ai_family = AF_INET; // For an IPv4 socket
+                int err = getaddrinfo(CONFIG_EXAMPLE_MULTICAST_IPV4_ADDR,
+                                        NULL,
+                                        &hints,
+                                        &res);
+                if (err < 0) {
+                    ESP_LOGE(TAG, "getaddrinfo() failed for IPV4 destination address. error: %d", err);
+                    break;
+                }
+                if (res == 0) {
+                    ESP_LOGE(TAG, "getaddrinfo() did not return any addresses");
+                    break;
+                }
+                ((struct sockaddr_in *)res->ai_addr)->sin_port = htons(UDP_PORT);
+                inet_ntoa_r(((struct sockaddr_in *)res->ai_addr)->sin_addr, addrbuf, sizeof(addrbuf)-1);
+                ESP_LOGI(TAG, "Sending to IPV4 multicast address %s:%d...",  addrbuf, UDP_PORT);
+                err = sendto(sock, sendbuf, len, 0, res->ai_addr, res->ai_addrlen);
+                freeaddrinfo(res);
+                if (err < 0) {
+                    ESP_LOGE(TAG, "IPV4 sendto failed. errno: %d", errno);
+                    break;
+                } 
+                rcvvote = false; //for testing, sent once only
+            }
+            else if (rcvvote && iamleader)
+            {
+                const char sendfmt[] = "vl%c%d\n";
+                char sendbuf[10];
+                char addrbuf[32] = { 0 };
+                int len = snprintf(sendbuf, sizeof(sendbuf), sendfmt,rcvColor,rcvID);
                 if (len > sizeof(sendbuf)) {
                     ESP_LOGE(TAG, "Overflowed multicast sendfmt buffer!!");
                     err = -1;
@@ -728,9 +769,10 @@ void recv_task(){
     int len_in = uart_read_bytes(UART_NUM_1, data_in, BUF_SIZE, 20 / portTICK_RATE_MS);
     if (len_in >0) {
       if (data_in[0] == start) {
-            printf("Voting color received: %c\n", data_in[1]);
+            printf("Voting color received: %c%d\n", data_in[1],data_in[2]);
             //change fob color to received color 
             rcvColor = data_in[1];
+            rcvID = data_in[2];
             led_task();
             rcvvote = true; //got a vote from FOB, now need to trasmit that to FOB poll leader
         }
