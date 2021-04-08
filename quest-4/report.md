@@ -80,6 +80,8 @@ We created what is called a collection inside our database with a Mongoose Schem
 Our web server is organized with three columns to display the data for each election candidate in a list manner. Each vote is presented with its timestamp and Fob Id where the vote was casted. On top of each column there is a tally of the total votes that the candiates received which updates as new votes come in. Lastly, the user also has the functionality to start a new election by clicking a button. This action clears the database and starts a new voting query. 
 To constantly update the information shown to the user in the web page, we used socket io to communicate the data from client to server. 
 
+Here we can see how the data that is in the database is sorted into each candidates column in the web page.
+<img src="images/db.jpg" width="" height="200" /> | <img src="images/webpage.jpg" width="" height = "200" />) 
 
 
 ## Sketches and Photos
