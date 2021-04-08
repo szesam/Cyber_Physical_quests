@@ -16,7 +16,16 @@ In this quest we are designing an electronic voting system. To do so, we created
 Front end display includes a web client html page. The web client is also capable of sending commands back to the server, such as clearing out all votes and restarting the voting process.
 
 ### Investigative question: 
+Investigative Question: 
+In our electronic voting system, the most sensitive component is the voting data. Therefore, ideally the transfer of this data has to be completely secure from any hacker attacks. If the votes get altered in any way it would constitute a huge issue. Most of the possible attacks to our system can in some way or another change the data. However, there are ways to increase security to a system like this.
+Possible attacks to our system and how to counteratack them:
+- Man-in-the-middle (MitM) attack. Here a hacker can interfere in the connection and listen to the "conversation" between endpoints. We shoudl implement a strong encryption mechanism, and strong credentials for our router to prevent the hacker from rerouting our DNS server to their own. 
+- Denial of Service to the webpage, network, or the FOBS. The components could stop working properly or at all by overwhelming the requests. To prevent some of this type of attacks, we would have to increase the size of the connection queue and decrease the timeout on open connections.
+- Drive-by Attacks. Hackers look for insecure websites and spread malware. This could install malware on the computer and make other compents fail or make the system more prone to other attacks. To avoid this, we need to keep browsers and operating systems up to date to protect the device. 
+- Password attacks. Our databse is password protected and could be attacked and hacked to change vote data. To further protect our database, we would need to implement an account lockout policy that will lock the account after a few invalid password attempts. 
+- Cross-site scripting (XSS) attack. Here, our main web page can be completely altered with wrong information and any user interactions with it can cause other types of attacks. To prevent from this, we would have to make sure all data is validated an filtered before echoing anything back to the user in the web page.
 
+[Investigative source used](https://blog.netwrix.com/2018/05/15/top-10-most-common-types-of-cyber-attacks/)
 
 ## Self-Assessment
 
@@ -65,7 +74,11 @@ Leader election plays a big role in determining how the FOB transmits voting mes
 UDP multicast is the main networking administration structure used to connect multiple FOBs and the Raspberry PI server together. Essentially, a multicast address is opened within a local area network setup by a loan router. Within the multicast address, leader elections and UDP voting messages are broadcasted by each FOB when needed, and picked up by the relevant FOBs or PI server by using string matching. 
 
 ### Database and Front-end webpage:
-
+The databse used for our system is MongoDB with Atlas Cloud Databse Interface. We decided to implement this because it provides a easily accessible and password protected database that can interact with a Node JS program. 
+The Atlas Cloud Database Interface lets the Administrator create a cluster to store multiple databases while also making them password protected and only accesible by whitelisted IP addresses and specified user with credentials. 
+We created what is called a collection inside our database with a Mongoose Schema that specifies the attributes of each object (vote) of the collection. In essence, each vote data will have a "Vote" attribute (R,G,Y) and a "FobID" attribute (1,2,3,...). Lastly, the Schema automatically creates a timestamp for each object that is saved. With this timestamp we are able to access the most recent data as it gets saved in the database and we display it in the web server accordingly. 
+Our web server is organized with three columns to display the data for each election candidate in a list manner. Each vote is presented with its timestamp and Fob Id where the vote was casted. On top of each column there is a tally of the total votes that the candiates received which updates as new votes come in. Lastly, the user also has the functionality to start a new election by clicking a button. This action clears the database and starts a new voting query. 
+To constantly update the information shown to the user in the web page, we used socket io to communicate the data from client to server. 
 
 
 
@@ -86,16 +99,11 @@ UDP multicast is the main networking administration structure used to connect mu
 - Raspberry Pi Zero W 
 - RMT and UART for NFC IR
 - UDP Protocol (Multicast)
-- DDNS
-- MongoDB
+- MongoDB, Mongoose, and Atlas Cloud DB
 - node.js (socket.io, express, datagram)
-- CanvasJS 
 
 ## References
 - [UDP client expressif](https://github.com/espressif/esp-idf/tree/master/examples/protocols/sockets/udp_client)
-- [ADXL343 specfications](http://whizzer.bu.edu/skills/accel)
-- [Thermistor sensor spec sheet](https://www.eaa.net.au/PDF/Hitech/MF52type.pdf)
-- [DDNS](http://whizzer.bu.edu/skills/dyndns-pi)
 - [WIFI on ESP](http://whizzer.bu.edu/skills/wifi)
 -----
 
