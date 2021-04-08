@@ -73,6 +73,8 @@ Leader election plays a big role in determining how the FOB transmits voting mes
 
 UDP multicast is the main networking administration structure used to connect multiple FOBs and the Raspberry PI server together. Essentially, a multicast address is opened within a local area network setup by a loan router. Within the multicast address, leader elections and UDP voting messages are broadcasted by each FOB when needed, and picked up by the relevant FOBs or PI server by using string matching. 
 
+<img src="images/votingexample.jpg" width="500" height="" />
+
 ### Database and Front-end webpage:
 The databse used for our system is MongoDB with Atlas Cloud Databse Interface. We decided to implement this because it provides a easily accessible and password protected database that can interact with a Node JS program. 
 The Atlas Cloud Database Interface lets the Administrator create a cluster to store multiple databases while also making them password protected and only accesible by whitelisted IP addresses and specified user with credentials. 
