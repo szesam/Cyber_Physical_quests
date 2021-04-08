@@ -1,5 +1,5 @@
-/*Carmen Hurtado and Samuel Sze */
-
+/*Carmen Hurtado and Samuel Sze 
+04-08-2021*/
 
 //initialize server
 var app = require('express')();
@@ -14,7 +14,6 @@ var http = require('http').Server(app);
 //Multicast address
 const MULTICAST_ADDR = "232.10.11.12";
 
-
 //Create acknowledge packet to send back to udp_client upon message received
 const msg = Buffer.from('e2');
 
@@ -27,7 +26,6 @@ mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true})
     .then((result) => console.log('Connected to database')
         
 )
-
 //Listening on server
 server.on('listening', function () {
     server.addMembership(MULTICAST_ADDR);
@@ -37,25 +35,14 @@ server.on('listening', function () {
         process.pid
     }`
     );
-
 })
 
 //save message to database when receiving voting message
 server.on('message', function (message, remote) {
     console.log(remote.address + ':' + remote.port +' - ' + message.toString());
-    //save data to database
-    savedata(message.toString());
-    //if message contains a vote then fetch data from db 
+    //save data to database only if it is the leader message
     if(message.toString()[1] == 'l'){
-        if(message.toString()[2] == 'R'){
-            retrieveR();
-        }
-        else if(message.toString()[2] == 'G'){
-            retrieveG();
-        }
-        else if(message.toString()[2] == 'Y'){
-            retrieveY();
-        } 
+        savedata(message.toString());
     }
 });
 
@@ -96,7 +83,7 @@ io.on('connection', function(socket){
         console.log("Button pushed");
         //clear database
         clear_db();
-        //refrsh the page contents 
+        //refresh the page contents 
         votes1 = "";
         votes2 = "";
         votes3 = "";
@@ -111,24 +98,18 @@ io.on('connection', function(socket){
 http.listen(3334, function(){
 });
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 //function to retrieve data from database depending on candidate 
-//retrieve data from db
 
 var votes1 = "";
 var total_votes1 = 0;
 //gets data for candidate 1 
 function retrieveR(){
-    var i = 0;
     const query1 = { "vote": 'R' };
-    //start query from LAST time stamp 
-    //need to incluse LAST time stamp as well 
-    Vote.find(query1).sort({ createdAt: -1 })
+    //only get the latest vote for R candidate 
+    Vote.findOne().sort({ field: 'asc', _id: -1 }).limit(1)
         .then((result) => {
-            while(i < Object.keys(result).length){
-                votes1 = votes1 + ("Time: " + result[i].createdAt + " FobID: " + result[i].fob_id + ","); 
-                i = i + 1;    
-            }
+            votes1 = votes1 + ("Time: " + result.createdAt + " FobID: " + result.fob_id + ",");     
         }
     );
     //finding total number of votes
@@ -139,14 +120,11 @@ var votes2 = "";
 var total_votes2 = 0;
 //gets data for candidate 2
 function retrieveG(){
-    var j = 0;
     const query2 = { "vote": 'G' };
-    Vote.find(query2).sort({ createdAt: -1 })
+    //only get the latest vote for G candidate 
+    Vote.findOne().sort({ field: 'asc', _id: -1 }).limit(1)
         .then((result) => {
-            while(j < Object.keys(result).length){
-                votes2 = votes2 + ("Time: " + result[j].createdAt + " FobID: " + result[j].fob_id + ","); 
-                j = j + 1;    
-            }
+            votes2 = votes2 + ("Time: " + result.createdAt + " FobID: " + result.fob_id + ",");     
         }
     );
     //finding total number of votes
@@ -157,17 +135,12 @@ var votes3 = "";
 var total_votes3 = 0;
 //gets data for candidate 3
 function retrieveY(){
-    var h = 0;
     const query3 = { "vote": 'Y' };
-
-    Vote.find(query3).sort({ createdAt: -1 })
+    //only get the latest vote for Y candidate 
+    Vote.findOne().sort({ field: 'asc', _id: -1 }).limit(1)
         .then((result) => {
-            while(h < Object.keys(result).length){
-                votes3 = votes3 + ("Time: " + result[h].createdAt + " FobID: " + result[h].fob_id + ",");
-                
-                h = h + 1;    
-            }
-        } 
+            votes3 = votes3 + ("Time: " + result.createdAt + " FobID: " + result.fob_id + ",");     
+        }
     );
     //finding total number of votes
     Vote.find(query3).then((result) => total_votes3 = result.length);
@@ -175,21 +148,29 @@ function retrieveY(){
    
 //function to save the data 
 function savedata(data) {
-    if(data[1] == 'l'){
-        var vote = new Vote({
-            vote: data[2],
-            fob_id: data[3],
-         })
-         vote.save();
-    } 
+    var vote = new Vote({
+        vote: data[2],
+        fob_id: data[3],
+    })
+    //only after saving the vote is that we retrieve it 
+    vote.save().then((result) => {
+        if(data[2] == 'R'){
+            retrieveR();
+        }
+        else if(data[2] == 'G'){
+            retrieveG();
+        }
+        else if(data[2] == 'Y'){
+            retrieveY();
+        } 
+    });
 }
    
 
 //function to clean database and restart talling votes 
-// DOES NOT WORK 
 function clear_db(){
     Vote.deleteMany({}).then(function(){
-        console.log("Data deleted, Reelection started"); // Success
+        console.log("Data deleted, Reelection started"); 
     });
 }
 

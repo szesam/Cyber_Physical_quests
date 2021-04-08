@@ -1,5 +1,5 @@
 <!-- Carmen Hurtado and Samuel Sze 03-05-2021 
-EC444 Quest 3: Hurricane Box -->
+EC444 Quest 4: Electronic Voting -->
 
 <!doctype html>
 <html>
@@ -10,7 +10,7 @@ EC444 Quest 3: Hurricane Box -->
   <header>
     <h1>Election Results</h1>
   </header>
-  <!-- two columns for displaying candidates and votes  -->
+  <!-- Three columns for displaying candidates and votes  -->
   <div class="row">
     <div class="column">
       <h2>Red</h2>
@@ -34,8 +34,6 @@ EC444 Quest 3: Hurricane Box -->
         <p id = "p3"> Votes </p>
     </div>
   </div>
-  
-  
   
   <!-- Restart election button -->
   <form>
@@ -89,7 +87,7 @@ EC444 Quest 3: Hurricane Box -->
     
     var socket = io();
     $(function () {
-    //display votes
+    //display votes and voting count
       socket.on('dataMsg1', function(votes1){
         votes1 = votes1.split(",");
         for (let i = 0; i < votes1.length; i++) {
@@ -131,9 +129,7 @@ EC444 Quest 3: Hurricane Box -->
     });
 
     //Restart election Button
-    //CLEAR PARAGRAPH FIELD TO START TALLING NEW VOTES 
     const button = document.querySelector('input');
-    // const paragraph = document.querySelector('p');
     button.addEventListener('click', restart);
     
     //updates button value on web page
@@ -141,9 +137,6 @@ EC444 Quest 3: Hurricane Box -->
         socket.emit('data', { 
           buttondata: "Restart Election"
         });
-        // document.getElementById("p1").innerHTML = 'Awaiting votes';
-        // document.getElementById("p2").innerHTML = 'Awaiting votes';
-        // document.getElementById("p3").innerHTML = 'Awaiting votes';
     }
 
   </script> 
