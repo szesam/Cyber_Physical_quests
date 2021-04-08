@@ -1,0 +1,144 @@
+<!-- Carmen Hurtado and Samuel Sze 03-05-2021 
+EC444 Quest 4: Electronic Voting -->
+
+<!doctype html>
+<html>
+  <body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
+  <header>
+    <h1>Election Results</h1>
+  </header>
+  <!-- Three columns for displaying candidates and votes  -->
+  <div class="row">
+    <div class="column">
+      <h2>Red</h2>
+      <div class="boxed">
+        <div id="TotalVotes1" > Total Votes: </div> 
+      </div>
+      <p id = "p1"> Votes </p>
+    </div>
+    <div class="column">
+      <h2>Green</h2>
+      <div class="boxed">
+        <div id="TotalVotes2" > Total Votes: </div> 
+      </div>
+      <p id = "p2"> Votes </p>
+    </div>
+    <div class="column">
+        <h2>Blue</h2>
+        <div class="boxed">
+          <div id="TotalVotes3" > Total Votes: </div> 
+        </div>
+        <p id = "p3"> Votes </p>
+    </div>
+  </div>
+  
+  <!-- Restart election button -->
+  <form>
+    <input type="button" value="New election" id = "button">
+  </form>
+
+  <!-- Divs styles -->
+  <style>
+    #button{
+      position:absolute; 
+      border-color: green;
+      top: 1%;
+      left: 80%;
+      width: 14%;
+      height: 7%;
+      font-size: 20px; 
+    }
+    #Candidate1{
+      margin-left: 50px;
+      font-size: 40px; 
+      display: inline-block;
+    }
+    #Candidate2{
+      font-size: 40px; 
+      display: inline-block;
+    }
+    #Candidate3{
+      font-size: 40px; 
+      display: inline-block;
+    }
+    * {
+    box-sizing: border-box;
+    }
+    /* Create two equal columns that floats next to each other */
+    .column {
+    float: left;
+    width: 33.33%;
+    padding: 10px;
+    height: 300px; /* Should be removed. Only for demonstration */
+    }
+
+    /* Clear floats after the columns */
+    .row:after {
+    content: "";
+    display: table;
+    clear: both;
+    }
+    </style>
+  
+  <script>
+    
+    var socket = io();
+    $(function () {
+    //display votes and voting count
+      socket.on('dataMsg1', function(votes1){
+        votes1 = votes1.split(",");
+        for (let i = 0; i < votes1.length; i++) {
+        votes1[i] = "- " + votes1[i] + "<br>";
+        }
+        votes1 = votes1.join("");
+        document.getElementById("p1").innerHTML = votes1;
+      });
+
+      socket.on('dataMsg2', function(votes2){
+        votes2 = votes2.split(",");
+        for (let i = 0; i < votes2.length; i++) {
+        votes2[i] = "- " + votes2[i] + "<br>";
+        }
+        votes2 = votes2.join("");
+        document.getElementById("p2").innerHTML = votes2;
+      });
+
+      socket.on('dataMsg3', function(votes3){
+        votes3 = votes3.split(",");
+        for (let i = 0; i < votes3.length; i++) {
+        votes3[i] = "- " + votes3[i] + "<br>";
+        }
+        votes3 = votes3.join("");
+        document.getElementById("p3").innerHTML = votes3;
+      });
+
+      socket.on('dataMsg4', function(total_votes1){
+        document.getElementById('TotalVotes1').innerHTML = "Total Votes: " + total_votes1;
+      });
+
+      socket.on('dataMsg5', function(total_votes2){
+        document.getElementById('TotalVotes2').innerHTML = "Total Votes: " + total_votes2;
+      });
+
+      socket.on('dataMsg6', function(total_votes3){
+        document.getElementById('TotalVotes3').innerHTML = "Total Votes: " + total_votes3;
+      });
+    });
+
+    //Restart election Button
+    const button = document.querySelector('input');
+    button.addEventListener('click', restart);
+    
+    //updates button value on web page
+    function restart() {
+        socket.emit('data', { 
+          buttondata: "Restart Election"
+        });
+    }
+
+  </script> 
+  </body>
+</html>
