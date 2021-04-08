@@ -1,4 +1,4 @@
-// Quest 4 progress
+// Quest 4 By Samuel Sze and Carmen Hurtado
 /* 
 Setup: 
 a. Change each FOB ID accordingly on line 88.
@@ -11,7 +11,8 @@ Backend:
 4. FOB leader will repackage the vote and broadcast to PI, message type: string: vl%c%c, votecolor, myID
 
 Frontend:
-5. Thus begin Carmen's database/webpage/front-end integration.
+5. Database 
+6. Webpage
 */
 
 // Standard C library
@@ -75,6 +76,7 @@ static const char *V4TAG = "mcast-ipv4";
 #define BLUEPIN   14
 #define GREENPIN  32
 #define REDPIN    15
+#define ONBOARD   13
 #define COLOR 'R'
 
 // Mutex (for resources)
@@ -294,9 +296,11 @@ static void led_init() {
     gpio_pad_select_gpio(BLUEPIN);
     gpio_pad_select_gpio(GREENPIN);
     gpio_pad_select_gpio(REDPIN);
+    gpio_pad_select_gpio(ONBOARD);
     gpio_set_direction(BLUEPIN, GPIO_MODE_OUTPUT);
     gpio_set_direction(GREENPIN, GPIO_MODE_OUTPUT);
     gpio_set_direction(REDPIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(ONBOARD,GPIO_MODE_OUTPUT);
 }
 
 
@@ -334,7 +338,11 @@ static void mcast_leader_election_task(void *pvParameters)
                 .tv_usec = 0,
             };
             struct timeval tv_non_leader = { //non-leader timeout
-                .tv_sec = 4,
+                .tv_sec = 10,
+                .tv_usec = 0,
+            };
+            struct timeval tv_becoming_leader = { //becoming-leader timeout
+                .tv_sec = 5,
                 .tv_usec = 0,
             };
             fd_set rfds;
@@ -343,6 +351,9 @@ static void mcast_leader_election_task(void *pvParameters)
             int s;
             if (iamleader) {
                 s = select(sock + 1, &rfds, NULL, NULL, &tv_leader);
+            }
+            else if (becomingleader) {
+                s = select(sock + 1, &rfds, NULL, NULL, &tv_becoming_leader);
             }
             else {
                 s = select(sock + 1, &rfds, NULL, NULL, &tv_non_leader);
@@ -457,7 +468,7 @@ static void mcast_leader_election_task(void *pvParameters)
                     recvbuf[len] = 0; // Null-terminate whatever we received and treat like a string...
                     ESP_LOGI(TAG, "%s", recvbuf);
 
-                    if ((int)recvbuf[0] == 101 && recvbuf[1]-'0' < myID) //if election msg and incoming ID lower than mine
+                    if (((int)recvbuf[0] == 101 && recvbuf[1]-'0' < myID) || ((int)recvbuf[0] == 97 && recvbuf[1]-'0' < myID)) //if election msg and incoming ID lower than mine or answer msg and incoming ID lower than mine
                     {
                         //chance to become leader
                         becomingleader = true;
@@ -635,20 +646,30 @@ static void mcast_leader_election_task(void *pvParameters)
                     else { //recevied a message but its either election msg with higher ID, answer message from other higher ID when i hold election, or leader msg
                         becomingleader = false;
                     }
+                    // //received answer message from other FOBs, but my answer message is still higher than theirs
+                    // if ((int)recvbuf[0] == 97 && recvbuf[0] - '0' < myID) 
+                    // {
+                    //     printf("I came here \n");
+                    //     becomingleader = true;
+                    // }
                 }
             }
             else { // s == 0
                 // Timeout passed with no incoming data, so send something
-                if (becomingleader) //becomingleader already, now timeout again, becomes leader
+                if (becomingleader) //becomingleader already, now timeout for becoming leader time (lower than election timeout) becomes leader, b
                 {
                     iamleader = true;
-                    msgStatus = 'l';
+                    becomingleader = false;
                 }
                 else //quiet on channel, hold an election. 
                 {
                     //hold election
                     msgStatus = 'e';
                     becomingleader = true;
+                }
+                if (iamleader)
+                {
+                    msgStatus = 'l';
                 }
                 //leader broadcast every 5 seconds, election + becoming leader broadcast every 10seconds
                 const char sendfmt[] = "%c%d\n";
@@ -788,6 +809,24 @@ void recv_task(){
   free(data_in);
 }
 
+void led_blink_leader()
+{
+    while(1)
+    {
+        if(iamleader) // blink red led 2 times
+        {
+            for (int i =0; i < 2; i++)
+            {
+                gpio_set_level(ONBOARD,1);
+                vTaskDelay(200);
+                gpio_set_level(ONBOARD,0);
+                vTaskDelay(200);
+            }
+        }
+        vTaskDelay(1000);
+    }
+}
+
 void app_main(void)
 {
     // Mutex for current values when sending
@@ -808,4 +847,5 @@ void app_main(void)
     xTaskCreate(&mcast_leader_election_task, "mcast_leader_election_task", 4096, NULL, 5, NULL);
     xTaskCreate(recv_task, "uart_rx_task", 1024*4, NULL, 5, NULL);
     xTaskCreate(button_task, "button_task", 1024*2, NULL, 5, NULL);
+    xTaskCreate(led_blink_leader, "led_blink_leader", 1024*2, NULL, 5, NULL);
 }
