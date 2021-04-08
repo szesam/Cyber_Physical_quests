@@ -81,7 +81,7 @@ Our web server is organized with three columns to display the data for each elec
 To constantly update the information shown to the user in the web page, we used socket io to communicate the data from client to server. 
 
 Here we can see how the data that is in the database is sorted into each candidates column in the web page.
-<img src="images/db.png" width="" height="200" /> | <img src="images/webpage.png" width="" height = "200" />) 
+(<img src="images/db.png" width="" height="200" /> | <img src="images/webpage.png" width="" height = "200" />) 
 
 
 ## Sketches and Photos
