@@ -87,7 +87,6 @@ Here we can see how the data that is in the database is sorted into each candida
 ## Sketches and Photos
 <img src="images/storyboard.png" width="500" height="" />
 
-<img src="images/graph.png" width="" height="" />
 
 ## Supporting Artifacts
 - [Link to video demo](https://youtu.be/9RcBN8nKxJE)
