@@ -58,7 +58,7 @@ Possible attacks to our system and how to counteratack them:
 
 FOB circuitry includes an ESP32, a L293 H-bridge, two push-buttons, three LEDs, an IR transmitter and an IR receiver. Detail circuitry is shown in the figure below.  
 
-<img src="images/storyboard.png" width="500" height="" />
+<img src="images/fob.jpg" width="500" height="" />
 
 To change a voting color, the push-button corresponding can be depressed. To send a message, the other push-button can be depressed. The current FOB voting message will only be received by another receiving FOB if the convex side of the IR receiver is facing towards the IR transmitter. Once a message is received, a corresponding LED on the received FOB will light up indicating the voting color of the received FOB message. 
 
@@ -83,6 +83,8 @@ Our web server is organized with three columns to display the data for each elec
 To constantly update the information shown to the user in the web page, we used socket io to communicate the data from client to server. 
 
 Here we can see how the data that is in the database is sorted into each candidates column in the web page.
+
+
 <img src="images/db.png" width="400" height="" /> | <img src="images/webpage.png" width="400" height = "" />
 
 
@@ -91,7 +93,7 @@ Here we can see how the data that is in the database is sorted into each candida
 
 
 ## Supporting Artifacts
-- [Link to video demo](https://youtu.be/9RcBN8nKxJE)
+- [Link to video demo](https://youtu.be/9HahymETfx4)
 - [Link to .c code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-4/code/udp_multicast_example_main.c)
 - [Link to .js code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-4/code/server.js)
 - [Link to .html code file](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-4/code/main.html)
@@ -106,7 +108,9 @@ Here we can see how the data that is in the database is sorted into each candida
 - node.js (socket.io, express, datagram)
 
 ## References
-- [UDP client expressif](https://github.com/espressif/esp-idf/tree/master/examples/protocols/sockets/udp_client)
+- [UDP multicast expressif](https://github.com/espressif/esp-idf/blob/master/examples/protocols/sockets/udp_multicast/main/udp_multicast_example_main.c)
 - [WIFI on ESP](http://whizzer.bu.edu/skills/wifi)
+- [Bully Algorithm](https://www.cs.colostate.edu/~cs551/CourseNotes/Synchronization/BullyExample.html)
+- [MongoDB](https://www.mongodb.com/cloud/atlas)
 -----
 
