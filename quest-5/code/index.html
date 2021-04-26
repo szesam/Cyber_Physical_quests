@@ -1,0 +1,127 @@
+<!-- Carmen Hurtado and Samuel Sze 03-05-2021 
+EC444 Quest 3: Hurricane Box -->
+
+<!doctype html>
+<html>
+  <body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
+
+  <!-- Charts for vibrations next to each other -->
+  <div id="chartContainer1"></div> 
+  <div id="chartContainer2"></div>
+  <div id="chartContainer3"></div><br/>
+  
+  <!-- Video box for live camera video, src is ddns host and forwarded port -->
+  <iframe class="resp-iframe" src="http:teamrocket.ddns.net:2998"></iframe>
+  
+  <!--Buttons start, stop car-->
+  <form>
+    <!-- <p id = "text1">Start Buggy</p> -->
+    <input type="button" value="Start Buggy" id = "button1">
+  </form>
+  <form>
+    <input type="button" value="Stop Buggy" id = "button2">
+  </form>
+
+  <!-- Divs styles -->
+  <style>
+    /* #text1{
+      position:absolute;
+      top: 1%;
+      left: 70%;
+      height: 50px;
+      font-size: 24px;
+      color: red;
+      display: inline-block;
+    } */
+    #button1{
+      position:absolute;
+      /* top: 1%;
+      left: 60%; */
+      width: 7%;
+      height: 7%;
+      font-size: 13px;
+    }
+    #button2{
+      position:absolute;
+      /* top: 1%;
+      left: 60%; */
+      width: 7%;
+      height: 7%;
+      font-size: 13px;
+    }
+    #chartContainer1{
+      margin-top: 20px;
+      width: 45%; 
+      height: 360px;
+      display: inline-block;
+    }
+    #chartContainer2{
+      margin-top: 20px;
+      width: 45%; 
+      height: 360px;
+      display: inline-block;
+    }
+    #chartContainer3{
+      width: 45%; 
+      height: 360px;
+      display: inline-block;
+    }
+    .resp-iframe{
+      position: absolute;
+      top: 54%;
+      left: 50%;
+      width:600px;
+      height:350px;
+    }
+    </style>
+  
+  <script>
+    var socket = io();
+    $(function () {
+    //render first chart 
+      socket.on('dataMsg1', function(chartOptions1){
+        var chart1 = new CanvasJS.Chart("chartContainer1", chartOptions1);
+        chart1.render();
+      });
+      //render second chart
+      socket.on('dataMsg2', function(chartOptions2){
+        var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
+        chart2.render();
+      });
+      //update thrid chart
+      socket.on('dataMsg3', function(chartOptions3){
+        var chart3 = new CanvasJS.Chart("chartContainer3", chartOptions3);
+        chart3.render();
+      });
+    });
+
+    //Buttonssssssss
+    const button1 = document.getElementById('button1');
+    const button2 = document.getElementById('button2');
+    //const paragraph = document.querySelector('p');
+    
+    button1.addEventListener('click', sendStartMesg);
+    button2.addEventListener('click', sendStopMesg);
+    
+    //sends start mesg 
+    function sendStartMesg() {
+        
+        socket.emit('data1', { 
+          buttondata: "Start Buggy"
+        }); 
+    }
+
+    //sends stop mesg 
+    function sendStopMesg() {
+        
+        socket.emit('data2', { 
+          buttondata: "Stop Buggy"
+        }); 
+    }
+
+  </script> 
+  </body>
+</html>
