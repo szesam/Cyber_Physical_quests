@@ -61,7 +61,7 @@ function push_sensor_data(data)
     }
 }
 //Bind server to PI local address on router with port at 3333
-server.bind(3333,'192.168.1.110');
+server.bind(3333,'192.168.1.126');
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // socket io script connect server to client (web browser) to display canvasjs charts.

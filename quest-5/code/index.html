@@ -14,7 +14,7 @@ EC444 Quest 3: Hurricane Box -->
   <div id="chartContainer3"></div><br/>
   
   <!-- Video box for live camera video, src is ddns host and forwarded port -->
-  <iframe class="resp-iframe" src="http:teamrocket.ddns.net:2998"></iframe>
+  <iframe id="camera_view" class="resp-iframe" src="http://192.168.1.136:8081"></iframe>
   
   <!--Buttons start, stop car-->
   <form>
@@ -36,8 +36,11 @@ EC444 Quest 3: Hurricane Box -->
       color: red;
       display: inline-block;
     } */
+    #camera_view {
+      transform: rotate(180deg);
+    }
     #button1{
-      position:absolute;
+      /* position:absolute; */
       /* top: 1%;
       left: 60%; */
       width: 7%;
@@ -45,7 +48,7 @@ EC444 Quest 3: Hurricane Box -->
       font-size: 13px;
     }
     #button2{
-      position:absolute;
+      /* position:absolute; */
       /* top: 1%;
       left: 60%; */
       width: 7%;
