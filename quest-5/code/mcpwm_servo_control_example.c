@@ -61,10 +61,14 @@
 #define TIMER_INTERVAL_SEC   (1)    // Sample test interval is 0.1s
 #define TEST_WITH_RELOAD      1     // Testing will be done with auto reload
 
+//Crawler definitions
 //You can get these value from the datasheet of servo you use, in general pulse width varies between 1000 to 2000 mocrosecond
 #define SERVO_MIN_PULSEWIDTH 700 //Minimum pulse width in microsecond
 #define SERVO_MAX_PULSEWIDTH 2100 //Maximum pulse width in microsecond
 #define SERVO_MAX_DEGREE 90 //Maximum angle in degree upto which servo can rotate
+#define DRIVE_MIN_PULSEWIDTH 900 //Minimum pulse width in microsecond
+#define DRIVE_MAX_PULSEWIDTH 1900 //Maximum pulse width in microsecond
+#define DRIVE_MAX_DEGREE 180 //Maximum angle in degree upto which servo can rotate
 
 //ADC definitions
 #define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
@@ -86,7 +90,8 @@ float previous_error = 0.0; //previous error for PID
 float integral = 0.0; // integral term 
 float derivative; // derivative term
 // Distance detected from LIDAR
-float distance;
+float distance_samuel;
+float distance_carmen;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -379,7 +384,6 @@ uint16_t readRegister(uint8_t reg) {
     i2c_master_stop(cmd);
     //stop condition 
     i2c_master_cmd_begin(I2C_EXAMPLE_MASTER_NUM, cmd, 1000 / portTICK_RATE_MS);
-
     //start command for cmd2
     i2c_master_start(cmd2);
     //sensor address, read, ack
@@ -457,15 +461,23 @@ void master_init()
 // Driving servo: takes input from webpage and drive the buggy - need to add in code
 void driving_servo(void *arg)
 {
-    // takes
-    int count_speed;
+    uint32_t angle, count;
     while(1)
     {
-        //code goes here.
-        vTaskDelay(100 / portTICK_PERIOD_MS); 
+      if (distance_samuel > 30){
+          //keeps on driving if distance is >30
+          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1400;
+          vTaskDelay(100/portTICK_RATE_MS); 
+      }
+      else
+      {
+          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, 1200);
+          vTaskDelay(2000/portTICK_RATE_MS);
+      }
     }
+    vTaskDelete(NULL);
 }
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ///////////////////////////////////////////////////////
 
 // void steering_servo(void *arg)
 // {
@@ -529,8 +541,7 @@ void adxl343() {
 ////////////////////////////////////////////////////////////////////////////////
 // LIDAR 
 ////////////////////////////////////////////////////////////////////////////////
-static void test_lidar() {
-  printf("\n>> Polling Lidar\n");
+static void test_lidar_samuel() {
   while (1) {
     uint8_t reg = REGISTER_READ;
     uint8_t data = MEASURE_VALUE;
@@ -544,12 +555,31 @@ static void test_lidar() {
       // printf("Reading: %d\n", reading);
       vTaskDelay(5);
     }
-    distance = (float)(readRegister(HIGH_LOW));
-    printf("Distance: %f\n", distance);
+    distance_samuel = (float)(readRegister(HIGH_LOW));
+    printf("Distance: %f\n", distance_samuel);
     vTaskDelay(1000 / portTICK_RATE_MS);
   }
 }
 
+static void test_lidar_carmen() {
+  while (1) {
+    uint8_t reg = REGISTER_READ;
+    uint8_t data = MEASURE_VALUE;
+    writeRegister(reg,data);
+    // continously read register 0x01 until first bit (LSB) goes 0
+    int compare = 1;
+    while(compare)
+    {
+      uint8_t reading = readRegister(0x01);
+      compare = reading&(1<<7);
+      // printf("Reading: %d\n", reading);
+      vTaskDelay(5);
+    }
+    distance_carmen = (float)(readRegister(HIGH_LOW));
+    printf("Distance: %f\n", distance_carmen);
+    vTaskDelay(1000 / portTICK_RATE_MS);
+  }
+}
 ////////////////////////////////////////////////////////////////////////////////
 //encoder wheel speed
 void encoder_adc(void* arg)
@@ -619,5 +649,7 @@ void app_main(void)
     xTaskCreate(encoder_adc,"encoder_adc", 4096, NULL, 5, NULL);
     xTaskCreate(encoder_getting_wheel_speed,"encoder_getting_wheel_speed", 4096, NULL, 5, NULL);
     xTaskCreate(adxl343,"adxl343_speed",4096,NULL,5,NULL);
-    xTaskCreate(test_lidar,"test_lidar", 4096, NULL, 5, NULL);
+    xTaskCreate(test_lidar_samuel,"test_lidar_samuel", 4096, NULL, 5, NULL);
+    // xTaskCreate(test_lidar_carmen,"test_lidar_carmen", 4096, NULL, 5, NULL);
+    // xTaskCreate(test_lidar_hazim,"test_lidar_hazim", 4096, NULL, 5, NULL);
 }
