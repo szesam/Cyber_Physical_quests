@@ -92,7 +92,7 @@ float derivative; // derivative term
 // Distance detected from LIDAR
 float distance_samuel;
 float distance_carmen;
-
+float xVal_acc;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -466,12 +466,12 @@ void driving_servo(void *arg)
     {
       if (distance_samuel > 30){
           //keeps on driving if distance is >30
-          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1400;
+          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1400);
           vTaskDelay(100/portTICK_RATE_MS); 
       }
       else
       {
-          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, 1200);
+          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1200);
           vTaskDelay(2000/portTICK_RATE_MS);
       }
     }
@@ -510,11 +510,21 @@ float calcPitch(float x, float y, float z){
   float pitch = atan2((-x), sqrt(y * y + z * z)) * 57.3;
   return pitch;
 }
-void getAccel(float * xp, float *yp, float *zp) {
+void getAccel(float * xp) {
   *xp = read16_adxl(ADXL343_REG_DATAX0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
-  *yp = read16_adxl(ADXL343_REG_DATAY0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
-  *zp = read16_adxl(ADXL343_REG_DATAZ0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
-  printf("X: %.2f \t Y: %.2f \t Z: %.2f\n", *xp, *yp, *zp);
+//  *yp = read16_adxl(ADXL343_REG_DATAY0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
+//  *zp = read16_adxl(ADXL343_REG_DATAZ0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
+//  printf("X: %.2f \t Y: %.2f \t Z: %.2f\n", *xp, *yp, *zp);
+}
+
+
+//void getAccel_X(float *x){
+//    *x = read16_adxl(ADXL343_REG_DATAX0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
+//}
+
+void getVelocity(){
+    float acceleration_1,  acceleration_2;
+    
 }
 
 // Task to continuously poll acceleration and calculate roll and pitch
@@ -530,11 +540,24 @@ void adxl343() {
     // Enable measurements
   writeRegister_adxl(ADXL343_REG_POWER_CTL, 0x08);
 
+    
+   //resource https://electronics.stackexchange.com/questions/112421/measuring-speed-with-3axis-accelerometer
+    /*Basically doing an approximation of the speed.
+     I wasn't able to fully test it since I need to have a moving crawler
+     However, it should theoretically work
+     */
   printf("\n>> Polling ADAXL343\n");
-  while (1) {
-    float xVal, yVal, zVal;
-    getAccel(&xVal, &yVal, &zVal);
-    vTaskDelay(1000 / portTICK_RATE_MS);
+    float v = 0;
+    float v_new = 0;
+    int sampling_period = 2000; //in ms
+    while (1) {
+      
+      float xVal;
+      getAccel(&xVal);
+        v_new = v + xVal*sampling_period;
+        v = v_new;
+      //getAccel_X(&xVal_acc);
+    vTaskDelay(sampling_period / portTICK_RATE_MS);
   }
 }
 
@@ -556,7 +579,7 @@ static void test_lidar_samuel() {
       vTaskDelay(5);
     }
     distance_samuel = (float)(readRegister(HIGH_LOW));
-    printf("Distance: %f\n", distance_samuel);
+    printf("Distance (Front): %f\n", distance_samuel);
     vTaskDelay(1000 / portTICK_RATE_MS);
   }
 }
@@ -576,7 +599,7 @@ static void test_lidar_carmen() {
       vTaskDelay(5);
     }
     distance_carmen = (float)(readRegister(HIGH_LOW));
-    printf("Distance: %f\n", distance_carmen);
+    printf("Distance (Right Side): %f\n", distance_carmen);
     vTaskDelay(1000 / portTICK_RATE_MS);
   }
 }
