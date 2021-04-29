@@ -138,15 +138,15 @@ static int s_retry_num = 0;
 //global variables for PID
 int dt_complete = 0; // for timer interrupt
 int dt = 1; //delta time for PID (0.1s)
-float setpoint = 50.0; // 50 cm
+float setpoint = 2.0; // desired speed m/s
 float previous_error = 0.0; //previous error for PID
 float integral = 0.0; // integral term 
 float derivative; // derivative term
 // Distance detected from LIDAR
 float distance_samuel;
-float distance_carmen;
 // speed of buggy
 float speed = 0.0;
+float PID_adjust = 0.0; //recommended speed adjustment given by PID
 //distance travelled by buggy
 float distance_travelled = 0.0;
 
@@ -653,21 +653,31 @@ void master_init()
 
 //function to start car 
 void startBuggy(){
-    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1300); // start bugggy
+    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1400); // start bugggy
 }
 //function to stop car 
 void stopBuggy(){
-    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1200); // put buggy back to neutral state 
+    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1300); // put buggy back to neutral state 
 }
 
 // Driving servo: takes input from webpage and drive the buggy - need to add in code
 void driving_servo(void *arg)
 {
+  int cur_count_mcpwm = 1300; //neutral state start
     while(1)
     {
       if (distance_samuel > 30){
-          //keeps on driving if distance is >30
-          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1400);
+          // use PID to maintain speed when distance above 30cm
+          if (PID_adjust > 0) //increase speed
+          {
+            cur_count_mcpwm += 10;
+          }
+          if (PID_adjust < 0) { //decrease speed
+            cur_count_mcpwm -= 10;
+          }
+          if (PID_adjust == 0) { //maintain speed
+          }
+          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, cur_count_mcpwm);
           vTaskDelay(1000/portTICK_RATE_MS); 
       }
       else
@@ -914,7 +924,6 @@ void i2c_task()
     // Continually writes the same command
     while (1) {
         int speed2 = (int)(speed*100.0);
-        printf("speed2: %d\n", speed2);
         
         displaybuffer[0] = alphafonttable[ ((speed2/1000))+ '0'];
         displaybuffer[1] = alphafonttable[ ((speed2/100))+ '0'];
@@ -942,6 +951,35 @@ void i2c_task()
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+//Helper PID task
+void PID()
+{
+    int kp = 1, ki = 0.1, kd = 0.1;
+    float error = (setpoint - speed); //m/s - m/s = m/s
+    integral = integral + error * dt; // m/s * s = m 
+    derivative = (error - previous_error) / dt; // m/s * 1/s = m/s^2
+    PID_adjust = kp * error + ki * integral + kd * derivative;
+    printf("PID output: \n\tError:\t\t%.2f m \n\tIntegral:\t%.2f m*s\n\tDerivative:\t%.2f m/s\n\tAdjustment is: \t%.2f m\n\n", error, integral, derivative, PID_adjust);
+    previous_error = error;
+}
+
+// Actual PID task
+void PID_task()
+{
+    while(1)
+    {
+        if (dt_complete == 1)
+        {
+            PID();
+            dt_complete = 0;
+            //re-enable alarm;
+            TIMERG0.hw_timer[TIMER_0].config.alarm_en = TIMER_ALARM_EN;
+        }
+    vTaskDelay(10);
+    } 
+}
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void app_main(void)
 {
     master_init();
@@ -952,8 +990,8 @@ void app_main(void)
     xTaskCreate(driving_servo,"driving_servo", 4096, NULL, 5, NULL);
     xTaskCreate(encoder_adc,"encoder_adc", 4096, NULL, 5, NULL);
     xTaskCreate(test_lidar_samuel,"test_lidar_samuel", 4096, NULL, 5, NULL);
-    // xTaskCreate(test_lidar_carmen,"test_lidar_carmen", 4096, NULL, 5, NULL);
-    // xTaskCreate(test_lidar_hazim,"test_lidar_hazim", 4096, NULL, 5, NULL);
+
     xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
     xTaskCreate(i2c_task, "i2c_task", 4096, NULL, 5, NULL);
+    xTaskCreate(PID_task, "PID_task", 4096, NULL, 5, NULL);
 }
