@@ -1,7 +1,10 @@
 // standard library
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/param.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
 #include "esp_attr.h"
 #include <math.h>
 
@@ -23,6 +26,8 @@
 #include "driver/i2c.h"
 #include "./ADXL343.h"
 
+//i2c alphanumeric
+
 //i2c PID
 // freeRTOS
 #include "freertos/FreeRTOS.h"
@@ -31,6 +36,31 @@
 // timer
 #include "driver/timer.h"
 
+// Console IO library
+#include "driver/uart.h"
+#include "sdkconfig.h"
+#include "esp_vfs_dev.h"
+
+//WIFI and UDP
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_log.h"
+#include "nvs_flash.h"
+#include "esp_netif.h"
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include <lwip/netdb.h>
+
+//GPIO task
+#include "driver/gpio.h"
+
+//files to include
+#include "alphafonttable.h"
+
+//ADC task
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Master I2C
@@ -47,10 +77,18 @@
 #define ACK_VAL                            0x00 // i2c ack value
 #define NACK_VAL                           0xFF // i2c nack value
 
+// 14-Segment Display
+#define SLAVE_ADDR_ALPHA                   0x70 // alphanumeric address
+#define OSC                                0x21 // oscillator cmd
+#define HT16K33_BLINK_DISPLAYON            0x01 // Display on cmd
+#define HT16K33_BLINK_OFF                  0    // Blink off cmd
+#define HT16K33_BLINK_CMD                  0x80 // Blink cmd
+#define HT16K33_CMD_BRIGHTNESS             0xE0 // Brightness cmd
+
 // ADXL343 addresses
-#define slave_addr_adxl                         ADXL343_ADDRESS // 0x53
+#define slave_addr_adxl                   ADXL343_ADDRESS // 0x53
 // LIDAR addresses
-#define SLAVE_ADDR                         0x62 //7-bit slave address with default value
+#define SLAVE_ADDR                        0x62 //7-bit slave address with default value
 #define REGISTER_READ                      0X00 // register to write to initiate ranging
 #define MEASURE_VALUE                      0x04 // Value to initiate ranging
 #define HIGH_LOW                           0x8f //for multi-byte read
@@ -79,9 +117,24 @@ static const adc_bits_width_t width = ADC_WIDTH_BIT_10; //10bit width for ez con
 static const adc_atten_t atten = ADC_ATTEN_DB_0;
 static const adc_unit_t unit = ADC_UNIT_1;
 
+//UDP and wifi definition
+#define EXAMPLE_ESP_WIFI_SSID      "Group_8"    //home wifi config
+#define EXAMPLE_ESP_WIFI_PASS      "password"   //home wifi
+#define EXAMPLE_ESP_MAXIMUM_RETRY  10
+#define HOST_IP_ADDR "192.168.1.126"            //host IP address
+#define PORT 3333                               //arbitrary port
+char *payload;
+/* FreeRTOS event group to signal when we are connected*/
+static EventGroupHandle_t s_wifi_event_group;
+#define WIFI_CONNECTED_BIT BIT0
+#define WIFI_FAIL_BIT      BIT1
+
+static const char *TAG = "example";
+static int s_retry_num = 0;
+
+
 //global defintions
-int count = 0; //used for counting the number of black-white transitions in encoder
-bool one_pulse = true; //used for determining whether or not to increment count in adc_reading
+
 //global variables for PID
 int dt_complete = 0; // for timer interrupt
 int dt = 1; //delta time for PID (0.1s)
@@ -92,7 +145,11 @@ float derivative; // derivative term
 // Distance detected from LIDAR
 float distance_samuel;
 float distance_carmen;
-float xVal_acc;
+// speed of buggy
+float speed = 0.0;
+//distance travelled by buggy
+float distance_travelled = 0.0;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -164,6 +221,47 @@ static void i2c_master_init(){
   // Data in MSB mode
   i2c_set_data_mode(i2c_master_port, I2C_DATA_MODE_MSB_FIRST, I2C_DATA_MODE_MSB_FIRST);
 }
+// Turn on oscillator for alpha display
+static int alpha_oscillator() {
+  int ret;
+  i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+  i2c_master_start(cmd);
+  i2c_master_write_byte(cmd, ( SLAVE_ADDR_ALPHA << 1 ) | WRITE_BIT, ACK_CHECK_EN);
+  i2c_master_write_byte(cmd, OSC, ACK_CHECK_EN);
+  i2c_master_stop(cmd);
+  ret = i2c_master_cmd_begin(I2C_EXAMPLE_MASTER_NUM, cmd, 1000 / portTICK_RATE_MS);
+  i2c_cmd_link_delete(cmd);
+  vTaskDelay(200 / portTICK_RATE_MS);
+  return ret;
+}
+
+// Set blink rate to off
+static int no_blink() {
+  int ret;
+  i2c_cmd_handle_t cmd2 = i2c_cmd_link_create();
+  i2c_master_start(cmd2);
+  i2c_master_write_byte(cmd2, ( SLAVE_ADDR_ALPHA << 1 ) | WRITE_BIT, ACK_CHECK_EN);
+  i2c_master_write_byte(cmd2, HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (HT16K33_BLINK_OFF << 1), ACK_CHECK_EN);
+  i2c_master_stop(cmd2);
+  ret = i2c_master_cmd_begin(I2C_EXAMPLE_MASTER_NUM, cmd2, 1000 / portTICK_RATE_MS);
+  i2c_cmd_link_delete(cmd2);
+  vTaskDelay(200 / portTICK_RATE_MS);
+  return ret;
+}
+
+// Set Brightness
+static int set_brightness_max(uint8_t val) {
+  int ret;
+  i2c_cmd_handle_t cmd3 = i2c_cmd_link_create();
+  i2c_master_start(cmd3);
+  i2c_master_write_byte(cmd3, ( SLAVE_ADDR_ALPHA << 1 ) | WRITE_BIT, ACK_CHECK_EN);
+  i2c_master_write_byte(cmd3, HT16K33_CMD_BRIGHTNESS | val, ACK_CHECK_EN);
+  i2c_master_stop(cmd3);
+  ret = i2c_master_cmd_begin(I2C_EXAMPLE_MASTER_NUM, cmd3, 1000 / portTICK_RATE_MS);
+  i2c_cmd_link_delete(cmd3);
+  vTaskDelay(200 / portTICK_RATE_MS);
+  return ret;
+}
 
 // Utility function to test for I2C device address -- not used in deploy
 int testConnection(uint8_t devAddr, int32_t timeout) {
@@ -222,6 +320,90 @@ static void print_char_val_type(esp_adc_cal_value_t val_type)
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+// WIFI INIT
+static void event_handler(void* arg, esp_event_base_t event_base,
+                                int32_t event_id, void* event_data)
+{
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
+            esp_wifi_connect();
+            s_retry_num++;
+            ESP_LOGI(TAG, "retry to connect to the AP");
+        } else {
+            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+        }
+        ESP_LOGI(TAG,"connect to the AP fail");
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+        s_retry_num = 0;
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+    }
+}
+void wifi_init_sta(void)
+{
+    s_wifi_event_group = xEventGroupCreate();
+
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_netif_create_default_wifi_sta();
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+
+    wifi_config_t wifi_config = {
+        .sta = {
+            .ssid = EXAMPLE_ESP_WIFI_SSID,
+            .password = EXAMPLE_ESP_WIFI_PASS,
+            /* Setting a password implies station will connect to all security modes including WEP/WPA.
+             * However these modes are deprecated and not advisable to be used. Incase your Access point
+             * doesn't support WPA2, these mode can be enabled by commenting below line */
+	     .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+
+            .pmf_cfg = {
+                .capable = true,
+                .required = false
+            },
+        },
+    };
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+    ESP_ERROR_CHECK(esp_wifi_start() );
+
+    ESP_LOGI(TAG, "wifi_init_sta finished.");
+
+    /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
+     * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
+            WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+            pdFALSE,
+            pdFALSE,
+            portMAX_DELAY);
+
+    /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
+     * happened. */
+    if (bits & WIFI_CONNECTED_BIT) {
+        ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
+                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+    } else if (bits & WIFI_FAIL_BIT) {
+        ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
+                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+    } else {
+        ESP_LOGE(TAG, "UNEXPECTED EVENT");
+    }
+
+    ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
+    vEventGroupDelete(s_wifi_event_group);
+}
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // MCPWM init
 static void mcpwm_example_gpio_initialize(void)
 {
@@ -234,7 +416,7 @@ void calibrateESC() {
     printf("Crawler on in 3seconds\n");       
     vTaskDelay(3000 / portTICK_PERIOD_MS);  // Give yourself time to turn on crawler
     printf("Crawler neutral\n"); 
-    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1200); // NEUTRAL signal in microseconds
+    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1300); // NEUTRAL signal in microseconds
     vTaskDelay(10000 / portTICK_PERIOD_MS);
     printf("Crawler neutral now, calibration done\n");
 }
@@ -350,8 +532,8 @@ dataRate_t getDataRate(void) {
 ////////////////////////////////////////////////////////////////////////////////
 // LIDAR V3 Functions ///////////////////////////////////////////////////////////
 
-// Write one byte to register
-void writeRegister(uint8_t reg, uint8_t data) {
+// Lidar_Samuel
+void writeRegister_samuel(uint8_t reg, uint8_t data) {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     //start command
     i2c_master_start(cmd);
@@ -366,9 +548,8 @@ void writeRegister(uint8_t reg, uint8_t data) {
     i2c_master_cmd_begin(I2C_EXAMPLE_MASTER_NUM, cmd, 1000 / portTICK_RATE_MS);
     i2c_cmd_link_delete(cmd);
 }
-
-// Read register
-uint16_t readRegister(uint8_t reg) {
+// Lidar_Samuel
+uint16_t readRegister_samuel(uint8_t reg) {
     int ret;
     uint8_t value;
     uint8_t value2;
@@ -403,6 +584,7 @@ uint16_t readRegister(uint8_t reg) {
     return (uint16_t)(value<<8|value2);
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Master init
 void master_init()
@@ -427,12 +609,14 @@ void master_init()
     // Init ADXL ////////////////////////////////////////////////
     uint8_t deviceID;
     getDeviceID_adxl(&deviceID);
+    if (deviceID == 0xE5) {
+      printf("\n>> Found ADAXL343\n");
+    }
     // Disable interrupts
     writeRegister_adxl(ADXL343_REG_INT_ENABLE, 0);
-    // Set range
-    setRange(ADXL343_RANGE_2_G);
-    // Enable measurements
+      // Enable measurements
     writeRegister_adxl(ADXL343_REG_POWER_CTL, 0x08);
+
 
     //4. ADC init
     //Check if Two Point or Vref are burned into eFuse
@@ -446,6 +630,15 @@ void master_init()
         adc2_config_channel_atten((adc2_channel_t)channel, atten);
     }
 
+     // Init WIFI 
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+    wifi_init_sta();
+
     //Characterize ADC
     adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
     esp_adc_cal_value_t val_type = esp_adc_cal_characterize(unit, atten, width, DEFAULT_VREF, adc_chars);
@@ -458,20 +651,29 @@ void master_init()
 // Below are tasks
 ////////////////////////////////////////////////////////////////////////////////
 
+//function to start car 
+void startBuggy(){
+    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1300); // start bugggy
+}
+//function to stop car 
+void stopBuggy(){
+    mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1200); // put buggy back to neutral state 
+}
+
 // Driving servo: takes input from webpage and drive the buggy - need to add in code
 void driving_servo(void *arg)
 {
-    uint32_t angle, count;
     while(1)
     {
       if (distance_samuel > 30){
           //keeps on driving if distance is >30
           mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1400);
-          vTaskDelay(100/portTICK_RATE_MS); 
+          vTaskDelay(1000/portTICK_RATE_MS); 
       }
       else
       {
-          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1200);
+          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1300);
+          speed = 0.0;
           vTaskDelay(2000/portTICK_RATE_MS);
       }
     }
@@ -510,55 +712,11 @@ float calcPitch(float x, float y, float z){
   float pitch = atan2((-x), sqrt(y * y + z * z)) * 57.3;
   return pitch;
 }
-void getAccel(float * xp) {
+void getAccel(float * xp, float *yp, float *zp) {
   *xp = read16_adxl(ADXL343_REG_DATAX0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
-//  *yp = read16_adxl(ADXL343_REG_DATAY0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
-//  *zp = read16_adxl(ADXL343_REG_DATAZ0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
-//  printf("X: %.2f \t Y: %.2f \t Z: %.2f\n", *xp, *yp, *zp);
-}
-
-
-//void getAccel_X(float *x){
-//    *x = read16_adxl(ADXL343_REG_DATAX0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
-//}
-
-void getVelocity(){
-    float acceleration_1,  acceleration_2;
-    
-}
-
-// Task to continuously poll acceleration and calculate roll and pitch
-void adxl343() {
-// Check for ADXL343
-  uint8_t deviceID;
-  getDeviceID_adxl(&deviceID);
-  if (deviceID == 0xE5) {
-    printf("\n>> Found ADAXL343\n");
-  }
-  // Disable interrupts
-  writeRegister_adxl(ADXL343_REG_INT_ENABLE, 0);
-    // Enable measurements
-  writeRegister_adxl(ADXL343_REG_POWER_CTL, 0x08);
-
-    
-   //resource https://electronics.stackexchange.com/questions/112421/measuring-speed-with-3axis-accelerometer
-    /*Basically doing an approximation of the speed.
-     I wasn't able to fully test it since I need to have a moving crawler
-     However, it should theoretically work
-     */
-  printf("\n>> Polling ADAXL343\n");
-    float v = 0;
-    float v_new = 0;
-    int sampling_period = 2000; //in ms
-    while (1) {
-      
-      float xVal;
-      getAccel(&xVal);
-        v_new = v + xVal*sampling_period;
-        v = v_new;
-      //getAccel_X(&xVal_acc);
-    vTaskDelay(sampling_period / portTICK_RATE_MS);
-  }
+  *yp = read16_adxl(ADXL343_REG_DATAY0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
+  *zp = read16_adxl(ADXL343_REG_DATAZ0) * ADXL343_MG2G_MULTIPLIER * SENSORS_GRAVITY_STANDARD;
+  // printf("X: %.2f \t Y: %.2f \t Z: %.2f\n", *xp, *yp, *zp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -568,45 +726,28 @@ static void test_lidar_samuel() {
   while (1) {
     uint8_t reg = REGISTER_READ;
     uint8_t data = MEASURE_VALUE;
-    writeRegister(reg,data);
+    writeRegister_samuel(reg,data);
     // continously read register 0x01 until first bit (LSB) goes 0
     int compare = 1;
     while(compare)
     {
-      uint8_t reading = readRegister(0x01);
+      uint8_t reading = readRegister_samuel(0x01);
       compare = reading&(1<<7);
       // printf("Reading: %d\n", reading);
       vTaskDelay(5);
     }
-    distance_samuel = (float)(readRegister(HIGH_LOW));
-    printf("Distance (Front): %f\n", distance_samuel);
+    distance_samuel = (float)(readRegister_samuel(HIGH_LOW));
     vTaskDelay(1000 / portTICK_RATE_MS);
   }
 }
 
-static void test_lidar_carmen() {
-  while (1) {
-    uint8_t reg = REGISTER_READ;
-    uint8_t data = MEASURE_VALUE;
-    writeRegister(reg,data);
-    // continously read register 0x01 until first bit (LSB) goes 0
-    int compare = 1;
-    while(compare)
-    {
-      uint8_t reading = readRegister(0x01);
-      compare = reading&(1<<7);
-      // printf("Reading: %d\n", reading);
-      vTaskDelay(5);
-    }
-    distance_carmen = (float)(readRegister(HIGH_LOW));
-    printf("Distance (Right Side): %f\n", distance_carmen);
-    vTaskDelay(1000 / portTICK_RATE_MS);
-  }
-}
 ////////////////////////////////////////////////////////////////////////////////
 //encoder wheel speed
 void encoder_adc(void* arg)
 {
+    int time_one_rev, timenow = 0, time_taken;
+    int count = 0;
+    bool one_pulse = true; //used for determining whether or not to increment count in adc_reading
     //Continuously sample ADC1
     while (1) 
     {
@@ -630,17 +771,6 @@ void encoder_adc(void* arg)
             one_pulse = false;
         }
         if (adc_reading >= 1000) one_pulse = true;
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-}
-
-void encoder_getting_wheel_speed(void *arg)
-{
-    int time_one_rev, timenow = 0, time_taken;
-    float speed;
-    // timenow = esp_timer_get_time();//get time in microseconds since boot
-    while(1)
-    {
         if (count == 7)
         {
             // one rev
@@ -648,19 +778,170 @@ void encoder_getting_wheel_speed(void *arg)
             // time taken to go one rev
             time_taken = time_one_rev - timenow;
             // find speed here:
-            speed = (1.0/(time_taken/1000000.0))*(0.2136);
+            speed = (1.0/(time_taken/1000000.0))*(0.62);
             printf("speed of wheel: %.2f\n",speed);
             //set old time to timenow
             timenow = time_one_rev;
+            distance_travelled = distance_travelled + 0.62;
             //reset count
             count = 0;
         }
-    vTaskDelay(100 / portTICK_PERIOD_MS); 
+        vTaskDelay(1); 
     }
 }
+
 ////////////////////////////////////////////////////////////////////////////////
+// WIFI TASK HERE
+static void udp_client_task(void *pvParameters)
+{
+    char rx_buffer[128];
+    char host_ip[] = HOST_IP_ADDR;
+    int addr_family = 0;
+    int ip_protocol = 0;
 
+    while (1) {
+        //create ipv4 socket
+        struct sockaddr_in dest_addr;
+        dest_addr.sin_addr.s_addr = inet_addr(HOST_IP_ADDR);
+        dest_addr.sin_family = AF_INET;
+        dest_addr.sin_port = htons(PORT);
+        addr_family = AF_INET;
+        ip_protocol = IPPROTO_IP;
+        int sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
+        if (sock < 0) {
+            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+            break;
+        }
+        ESP_LOGI(TAG, "Socket created, sending to %s:%d", HOST_IP_ADDR, PORT);
 
+        while (1) {
+            //find acceleration roll pitch
+            float xVal, yVal, zVal;
+            getAccel(&xVal, &yVal, &zVal);
+            // Populate payload by reading sensor data
+            asprintf(&payload,"%.2f, %.2f, %.2f, %.2f", xVal, yVal, speed, distance_travelled);
+            //send packet(payload) through socket to udp server on raspberry pi
+            int err = sendto(sock, payload, strlen(payload), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+            if (err < 0) {
+                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                break;
+            }
+            ESP_LOGI(TAG, "Message sent");
+            // Setup timeout using select to wait for UDP reply from server, if timeouts, break loop.
+            struct timeval tv = {
+                .tv_sec = 5,
+                .tv_usec = 0,
+            };
+            fd_set rfds;
+            FD_ZERO(&rfds);
+            FD_SET(sock,&rfds);
+            int s = select(sock + 1, &rfds, NULL, NULL, &tv);
+            if (s < 0) 
+            {
+                ESP_LOGE(TAG, "Select failed");
+                break;
+            }
+            else if (s > 0)
+            {
+                //create socket to receive message from raspberry pi
+                struct sockaddr_in source_addr; // Large enough for both IPv4 or IPv6
+                socklen_t socklen = sizeof(source_addr);
+                int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
+                // Error occurred during receiving
+                if (len < 0) {
+                    ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+                    break;
+                }
+                // Data received
+                else {
+                    rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
+                    ESP_LOGI(TAG, "Received %d bytes from %s:", len, host_ip);
+                    ESP_LOGI(TAG, "%s", rx_buffer);
+
+                    //if message received is start Buggy
+                    if(strcmp(rx_buffer, "Start Buggy") == 0){
+                        //start esc motor 
+                        startBuggy();
+                    }
+                    //if message received is Stop Buggy
+                    if(strcmp(rx_buffer, "Stop Buggy") == 0){
+                        //stop ESC motor
+                        stopBuggy();
+                    }
+
+                    if (strncmp(rx_buffer, "OK: ", 4) == 0) {
+                        ESP_LOGI(TAG, "Received expected message, reconnecting");
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                break;
+            }
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+        if (sock != -1) {
+            ESP_LOGE(TAG, "Shutting down socket and restarting...");
+            shutdown(sock, 0);
+            close(sock);
+        }
+    }
+    vTaskDelete(NULL);
+}
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//turn on alphanumeric display
+void i2c_task() 
+{
+    int ret;
+    ret = alpha_oscillator();
+    if(ret == ESP_OK) {printf("- oscillator: ok \n");}
+    ret = no_blink();
+    if(ret == ESP_OK) {printf("- blink: off \n");}
+    ret = set_brightness_max(0xF);
+    if(ret == ESP_OK) {printf("- brightness: max \n");}
+
+    // Write to characters to buffer
+    uint16_t displaybuffer[8];
+
+    // Display start speed of 0 m/s
+    displaybuffer[3] = alphafonttable['0'];
+    displaybuffer[2] = alphafonttable['0'];
+    displaybuffer[1] = alphafonttable['0'];
+    displaybuffer[0] = alphafonttable['0'];
+    
+    // Continually writes the same command
+    while (1) {
+        int speed2 = (int)(speed*100.0);
+        printf("speed2: %d\n", speed2);
+        
+        displaybuffer[0] = alphafonttable[ ((speed2/1000))+ '0'];
+        displaybuffer[1] = alphafonttable[ ((speed2/100))+ '0'];
+        displaybuffer[2] = alphafonttable[ ((speed2/10) % 10) + '0'];
+        displaybuffer[3] = alphafonttable[ (speed2 % 10)+ '0'];
+
+        
+        // Send commands characters to display over I2C
+        i2c_cmd_handle_t cmd4 = i2c_cmd_link_create();
+        i2c_master_start(cmd4);
+        i2c_master_write_byte(cmd4, ( SLAVE_ADDR_ALPHA << 1 ) | WRITE_BIT, ACK_CHECK_EN);
+        i2c_master_write_byte(cmd4, (uint8_t)0x00, ACK_CHECK_EN);
+        for (uint8_t i=0; i<8; i++) {
+            i2c_master_write_byte(cmd4, displaybuffer[i] & 0xFF, ACK_CHECK_EN);
+            i2c_master_write_byte(cmd4, displaybuffer[i] >> 8, ACK_CHECK_EN);
+        }
+        i2c_master_stop(cmd4);
+        ret = i2c_master_cmd_begin(I2C_EXAMPLE_MASTER_NUM, cmd4, 1000 / portTICK_RATE_MS);
+        i2c_cmd_link_delete(cmd4);
+
+       vTaskDelay(100);
+    }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void app_main(void)
 {
     master_init();
@@ -670,9 +951,9 @@ void app_main(void)
     // xTaskCreate(steering_servo, "steering_servo", 4096, NULL, 5, NULL);
     xTaskCreate(driving_servo,"driving_servo", 4096, NULL, 5, NULL);
     xTaskCreate(encoder_adc,"encoder_adc", 4096, NULL, 5, NULL);
-    xTaskCreate(encoder_getting_wheel_speed,"encoder_getting_wheel_speed", 4096, NULL, 5, NULL);
-    xTaskCreate(adxl343,"adxl343_speed",4096,NULL,5,NULL);
     xTaskCreate(test_lidar_samuel,"test_lidar_samuel", 4096, NULL, 5, NULL);
     // xTaskCreate(test_lidar_carmen,"test_lidar_carmen", 4096, NULL, 5, NULL);
     // xTaskCreate(test_lidar_hazim,"test_lidar_hazim", 4096, NULL, 5, NULL);
+    xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
+    xTaskCreate(i2c_task, "i2c_task", 4096, NULL, 5, NULL);
 }
