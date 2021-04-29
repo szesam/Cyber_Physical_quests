@@ -1,7 +1,7 @@
 # Quest Name
-Authors: FirstName1 LastName1, FirstName2 LastName2, FirstName3 LastName 3
+Authors: Carmen Hurtado, Samuel Sze, Hazim
 
-Date: YYYY-MM-DD
+Date: 2021-04-29
 -----
 
 ## Summary
@@ -61,7 +61,18 @@ The breadboard contains the circuits connecting the
 
 
 ## Modules, Tools, Source Used Including Attribution
-
+- ESP32
+- Lidar Lite V3
+- IR range finder 
+- ADC
+- I2C
+- Optical Encoder 
+- ADXL343
+- RaspberryPi Camera
+- Alphanumeric Display
+- UDP 
+- Node Js
+- SocketIO
 ## References
 
 -----
