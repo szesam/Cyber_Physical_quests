@@ -88,7 +88,7 @@
 // ADXL343 addresses
 #define slave_addr_adxl                   ADXL343_ADDRESS // 0x53
 // LIDAR addresses
-#define SLAVE_ADDR_SAMUEL                      0x62 //7-bit slave address with default value
+#define SLAVE_ADDR                          0x62 //7-bit slave address with default value
 #define REGISTER_READ                      0X00 // register to write to initiate ranging
 #define MEASURE_VALUE                      0x04 // Value to initiate ranging
 #define HIGH_LOW                           0x8f //for multi-byte read
@@ -113,9 +113,9 @@
 #define NO_OF_SAMPLES   50          //Multisampling
 static esp_adc_cal_characteristics_t *adc_chars;
 static const adc_channel_t channel = ADC_CHANNEL_5;     //GPIO33 if ADC1, GPIO14 if ADC2 - channel for encoder reading
-static const adc_channel_t channel2 = ADC_CHANNEL_3     //GPIO39
-static const adc_bits_width_t width = ADC_WIDTH_BIT_10; //10bit width for ez conversion. 
-static const adc_atten_t atten = ADC_ATTEN_DB_0;
+static const adc_channel_t channel3 = ADC_CHANNEL_3;    //GPIO39
+static const adc_bits_width_t width = ADC_WIDTH_BIT_12; //10bit width for ez conversion. 
+static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
 
 //UDP and wifi definition
@@ -157,6 +157,10 @@ bool start_flag;
 
 //distance IR
 float distance_IR;
+
+//adxl speed
+float v = 0;
+float v_new = 0;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -435,7 +439,12 @@ static uint32_t servo_per_degree_init(uint32_t degree_of_rotation)
     cal_pulsewidth = (SERVO_MIN_PULSEWIDTH + (((SERVO_MAX_PULSEWIDTH - SERVO_MIN_PULSEWIDTH) * (degree_of_rotation)) / (SERVO_MAX_DEGREE)));
     return cal_pulsewidth;
 }
-
+static uint32_t steering_per_degree_init(uint32_t degree_of_rotation)
+{
+    uint32_t cal_pulsewidth = 0;
+    cal_pulsewidth = (STEERING_MIN_PULSEWIDTH + (((STEERING_MAX_PULSEWIDTH - STEERING_MIN_PULSEWIDTH) * (degree_of_rotation)) / (STEERING_MAX_DEGREE)));
+    return cal_pulsewidth;
+}
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 // ADXL343 Functions ///////////////////////////////////////////////////////////
@@ -685,11 +694,11 @@ float range_finder(int voltage)
     }
     else if (voltage > 2750)
     {
-        return 150;
+        return 15;
     }
     else if (voltage <=400)
     {
-        return 15;
+        return 150;
     }
     return 1.0/inverse_distance;
 }
@@ -702,6 +711,21 @@ void startBuggy(){
 void stopBuggy(){
   stop_flag = 1; // put buggy back to neutral state 
 }
+//function that steer buggy to the left
+void steerBuggyleft() {
+  uint32_t angle, count;
+  count = 180;
+  angle = steering_per_degree_init(count);            
+  mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, angle);
+}
+
+//function that steer buggy to the right
+void steerBuggyright() {
+  uint32_t angle, count;
+  count = 0;
+  angle = steering_per_degree_init(count);
+  mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, angle);
+}
 
 // Driving servo: takes input from webpage and drive the buggy - need to add in code
 void driving_servo(void *arg)
@@ -711,9 +735,12 @@ void driving_servo(void *arg)
     {
       if (stop_flag == 1) {
         mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_B, 1300);
+        continue;
       }
       if (start_flag == 1) {
         stop_flag = 0;
+        start_flag = 0;
+        continue;
       }
       if (distance_samuel > 30){
           // use PID to maintain speed when distance above 30cm
@@ -740,23 +767,21 @@ void driving_servo(void *arg)
 }
 /////////////////////////                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ///////////////////////////////////////////////////////
 
-// void steering_servo(void *arg)
-// {
-//    int count, angle;
-//     while (1) {
-//         for (count = 0; count < SERVO_MAX_DEGREE; count++) {
-//             angle = servo_per_degree_init(count);
-//             mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, angle);
-//             vTaskDelay(100 / portTICK_PERIOD_MS);     //Add delay, since it takes time for servo to rotate, generally 100ms/60degree rotation at 5V
-//         }
-//         for (count = SERVO_MAX_DEGREE; count > 0; count--) {
-//             angle = servo_per_degree_init(count);
-//             mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, angle);
-//             vTaskDelay(100 / portTICK_PERIOD_MS);     //Add delay, since it takes time for servo to rotate, generally 100ms/60degree rotation at 5V
-//         }
-//         vTaskDelay(1000 / portTICK_PERIOD_MS); 
-//     }
-// }
+void steering_servo(void *arg)
+{
+   int count, angle;
+    while (1) {
+        // When IR dips below 50cm, means too close to a wall, steer away. 
+        if (distance_IR < 50.0)
+        {
+          uint32_t angle, count;
+          count = 0;
+          angle = steering_per_degree_init(count);
+          mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, angle);
+        }
+        vTaskDelay(1000 / portTICK_PERIOD_MS); 
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //adxl wheel speed
@@ -802,6 +827,7 @@ static void test_lidar_samuel() {
 
 static void find_distance_ir_left()
 {
+    int NO_OF_SAMPLES_IR = 50;
     float adc_reading = 0.0;
     //Multisampling
     while(1)
@@ -820,8 +846,8 @@ static void find_distance_ir_left()
       //Convert adc_reading to voltage in mV
       float voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
       // uint32_t distance = 5 * adc_reading;
-      distance_IR = range_finder(voltage) / 100.0;
-      printf("distance_IR: %.2f\n",distance_IR);
+      distance_IR = range_finder(voltage);
+      printf("distance_IR in cm: %.2f\n",distance_IR);
       vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
@@ -875,14 +901,14 @@ void encoder_adc(void* arg)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// WIFI TASK HERE
+// WIFI TASK HERE: ADXL speed, encoder speed and distance travelled. gets buggy commands from buttons on webpage
 static void udp_client_task(void *pvParameters)
 {
     char rx_buffer[128];
     char host_ip[] = HOST_IP_ADDR;
     int addr_family = 0;
     int ip_protocol = 0;
-
+    int sampling_period = 500; //in mss
     while (1) {
         //create ipv4 socket
         struct sockaddr_in dest_addr;
@@ -901,9 +927,12 @@ static void udp_client_task(void *pvParameters)
         while (1) {
             //find acceleration roll pitch
             float xVal, yVal, zVal;
+            xVal = xVal - 0.16;
+            v_new = xVal*(sampling_period/100);
+            v = v_new ;
             getAccel(&xVal, &yVal, &zVal);
             // Populate payload by reading sensor data
-            asprintf(&payload,"%.2f, %.2f, %.2f, %.2f", xVal, yVal, speed, distance_travelled);
+            asprintf(&payload,"%.2f, %.2f, %.2f", v, speed, distance_travelled);
             //send packet(payload) through socket to udp server on raspberry pi
             int err = sendto(sock, payload, strlen(payload), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
             if (err < 0) {
@@ -1033,7 +1062,7 @@ void PID()
     integral = integral + error * dt; // m/s * s = m 
     derivative = (error - previous_error) / dt; // m/s * 1/s = m/s^2
     PID_adjust = kp * error + ki * integral + kd * derivative;
-    printf("PID output: \n\tError:\t\t%.2f m \n\tIntegral:\t%.2f m*s\n\tDerivative:\t%.2f m/s\n\tAdjustment is: \t%.2f m\n\n", error, integral, derivative, PID_adjust);
+    // printf("PID output: \n\tError:\t\t%.2f m \n\tIntegral:\t%.2f m*s\n\tDerivative:\t%.2f m/s\n\tAdjustment is: \t%.2f m\n\n", error, integral, derivative, PID_adjust);
     previous_error = error;
 }
 
