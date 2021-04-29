@@ -7,6 +7,8 @@ Date: YYYY-MM-DD
 ## Summary
 **Contributors:**
 Samuel | Carmen | Hazim
+
+
 In this quest we are designing a semi-autonomous crawler which has the ability for cruise control as well as being controlled by a user through the internet.
 To achieve this, we have attached the following onto the crawler: 
     1) LIDAR
