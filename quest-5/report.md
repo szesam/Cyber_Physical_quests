@@ -55,6 +55,31 @@ The web page features 4 buttons. START BUGGY, STOP BUGGY, STEER RIGHT, STEER LEF
 On top of the base-design crawler, we attached  a breadboard using some zipties so that it secured in place even if the crawler is moving. 
 The breadboard contains the circuits connecting the 
 
+### Velocity from ADXL343
+
+Other than the encoder, we also used the accelerometer to detect the current speed of the crawler.
+Since the ADXL343 only detects the acceleration, we had to use "v = u + aT" to figure out the velocity (where u = initial velocity, a = sampled acceleration, T = sampling period).  The acceleration taken is only the acceleration on the x-axis
+However, since we can't do an integration on the accelerometer, this is only an aproximation. The approximate results are close the value measured by the encoder but there are still inaccuracies.
+
+The results are then send to the web page to be displayed alongside the speed measured by the encoder.
+
+### Steering
+
+Steering the crawler involves controlling the servo.
+The angle values to steer the crawler in straight, left, and right are 90, 0, and 180 degrees respectively.
+
+The fucntionality of the steering is used the following cases:
+    1) Steer left or Steer right button is pushed on the webpage
+    2) The IR detects objects too close (< 50cm) to the crawler and needs to steer clear of the obstacle.
+    
+    
+### Obstacle Avoidance
+
+To solve the issue of obstacle avoidance, we used the RPi camera to give the user a view of the crawler's path.
+Anytime the LIDAR detects an object that is within 1 meter of it, a warning message is sent to the webpage via a UDP socket. The warning basically tells the user that there might be a collision if the path is the same. The user then, with the visual feedback from the RPi camera, can choose to steer right or left by clicking the button aptly named "Steer Right" and "Steer Left" on the webpage.
+
+If the user doesn't take action and the object is now within 30cm of the crawler, it will automatically stop and send another warning to the user. The crawler will remain still until the user chooses to steer clear of the obstacle.
+
 
 ## Sketches and Photos
 <center><img src="./images/ece444.png" width="25%" /></center>  
