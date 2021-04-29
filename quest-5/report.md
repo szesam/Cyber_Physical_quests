@@ -55,6 +55,23 @@ The web page features 4 buttons. START BUGGY, STOP BUGGY, STEER RIGHT, STEER LEF
 On top of the base-design crawler, we attached  a breadboard using some zipties so that it secured in place even if the crawler is moving. 
 The breadboard contains the circuits connecting the 
 
+### Velocity from ADXL343
+
+Other than the encoder, we also used the accelerometer to detect the current speed of the crawler.
+Since the ADXL343 only detects the acceleration, we had to use "v = u + aT" to figure out the velocity (where u = initial velocity, a = sampled acceleration, T = sampling period).  The acceleration taken is only the acceleration on the x-axis
+However, since we can't do an integration on the accelerometer, this is only an aproximation. The approximate results are close the value measured by the encoder but there are still inaccuracies.
+
+The results are then send to the web page to be displayed alongside the speed measured by the encoder.
+
+### Steering
+
+Steering the crawler involves controlling the servo.
+The angle values to steer the crawler in straight, left, and right are 90, 0, and 180 degrees respectively.
+
+The fucntionality of the steering is used the following cases:
+    1) Steer left or Steer right button is pushed on the webpage
+    2) The IR detects objects too close (< 50cm) to the crawler and needs to steer clear of the obstacle.
+    
 
 ## Sketches and Photos
 <center><img src="./images/ece444.png" width="25%" /></center>  
