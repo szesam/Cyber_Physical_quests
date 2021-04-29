@@ -729,6 +729,38 @@ void getAccel(float * xp, float *yp, float *zp) {
   // printf("X: %.2f \t Y: %.2f \t Z: %.2f\n", *xp, *yp, *zp);
 }
 
+void adxl343() {
+// Check for ADXL343
+  uint8_t deviceID;
+  getDeviceID_adxl(&deviceID);
+  if (deviceID == 0xE5) {
+    printf("\n>> Found ADAXL343\n");
+  }
+  // Disable interrupts
+  writeRegister_adxl(ADXL343_REG_INT_ENABLE, 0);
+    // Enable measurements
+  writeRegister_adxl(ADXL343_REG_POWER_CTL, 0x08);
+
+    
+   //resource https://electronics.stackexchange.com/questions/112421/measuring-speed-with-3axis-accelerometer
+    /*Basically doing an approximation of the speed.
+     I wasn't able to fully test it since I need to have a moving crawler
+     However, it should theoretically work
+     */
+  printf("\n>> Polling ADAXL343\n");
+
+    int sampling_period = 500; //in ms
+    while (1) {
+      
+        float xVal;
+        getAccel(&xVal);
+        v_new = xVal*(sampling_period/1000);
+        v = v_new;
+        printf("Speed from accelerometer: %0.2f\n", v );
+        vTaskDelay(sampling_period / portTICK_RATE_MS);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // LIDAR 
 ////////////////////////////////////////////////////////////////////////////////
