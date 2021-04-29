@@ -858,9 +858,11 @@ static void udp_client_task(void *pvParameters)
 
         while (1) {
             //find acceleration roll pitch
-            float xVal, yVal, zVal;
-            getAccel(&xVal, &yVal, &zVal);
+            //float xVal, yVal, zVal;
+            //getAccel(&xVal, &yVal, &zVal);
             // Populate payload by reading sensor data
+            
+            //v is a global variable which holds the speed of the buggy from the accelerometers
             asprintf(&payload,"%.2f, %.2f, %.2f, %.2f", xVal, yVal, speed, distance_travelled);
             //send packet(payload) through socket to udp server on raspberry pi
             int err = sendto(sock, payload, strlen(payload), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
