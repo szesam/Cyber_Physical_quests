@@ -8,13 +8,19 @@ EC444 Quest 3: Hurricane Box -->
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
   <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
 
-  <!-- Charts for vibrations next to each other -->
-  <div id="chartContainer1"></div> 
-  <div id="chartContainer2"></div>
-  <div id="chartContainer3"></div><br/>
+  <!-- Boxes for displaying voltage and temperature -->
+  <div class="boxed">
+    <div id="speed" ></div> 
+    <div id="distance" ></div>
+  </div>
   
   <!-- Video box for live camera video, src is ddns host and forwarded port -->
-  <iframe id="camera_view" class="resp-iframe" src="http://192.168.1.136:8081"></iframe>
+  <iframe class="resp-iframe" src="http://192.168.1.136:8081"></iframe>
+
+  <!-- box for displaying object alert message -->
+  <div class="boxed">
+    <div id="alert" ></div> 
+  </div>
   
   <!--Buttons start, stop car-->
   <form>
@@ -23,6 +29,12 @@ EC444 Quest 3: Hurricane Box -->
   </form>
   <form>
     <input type="button" value="Stop Buggy" id = "button2">
+  </form>
+  <form>
+    <input type="button" value="Steer Right" id = "button3">
+  </form>
+  <form>
+    <input type="button" value="Steer Left" id = "button4">
   </form>
 
   <!-- Divs styles -->
@@ -36,8 +48,21 @@ EC444 Quest 3: Hurricane Box -->
       color: red;
       display: inline-block;
     } */
-    #camera_view {
+    /* #camera_view {
       transform: rotate(180deg);
+    } */
+    #speed{
+      margin-left: 50px;
+      font-size: 40px; 
+      display: inline-block;
+    }
+    #distance{
+      font-size: 40px; 
+      display: inline-block;
+    }
+    #alert{
+      font-size: 40px; 
+      display: inline-block;
     }
     #button1{
       /* position:absolute; */
@@ -55,29 +80,29 @@ EC444 Quest 3: Hurricane Box -->
       height: 7%;
       font-size: 13px;
     }
-    #chartContainer1{
-      margin-top: 20px;
-      width: 45%; 
-      height: 360px;
-      display: inline-block;
+    #button3{
+      /* position:absolute; */
+      /* top: 1%;
+      left: 60%; */
+      width: 7%;
+      height: 7%;
+      font-size: 13px;
     }
-    #chartContainer2{
-      margin-top: 20px;
-      width: 45%; 
-      height: 360px;
-      display: inline-block;
-    }
-    #chartContainer3{
-      width: 45%; 
-      height: 360px;
-      display: inline-block;
+    #button4{
+      /* position:absolute; */
+      /* top: 1%;
+      left: 60%; */
+      width: 7%;
+      height: 7%;
+      font-size: 13px;
     }
     .resp-iframe{
-      position: absolute;
+      /* justify-content: center; */
       top: 54%;
       left: 50%;
       width:600px;
       height:350px;
+      transform: rotate(180deg);
     }
     </style>
   
@@ -85,29 +110,40 @@ EC444 Quest 3: Hurricane Box -->
     var socket = io();
     $(function () {
     //render first chart 
-      socket.on('dataMsg1', function(chartOptions1){
-        var chart1 = new CanvasJS.Chart("chartContainer1", chartOptions1);
-        chart1.render();
+      // socket.on('dataMsg1', function(chartOptions1){
+      //   var chart1 = new CanvasJS.Chart("chartContainer1", chartOptions1);
+      //   chart1.render();
+      // });
+      // //render second chart
+      // socket.on('dataMsg2', function(chartOptions2){
+      //   var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
+      //   chart2.render();
+      // });
+      //update speed box
+      socket.on('dataMsg3', function(speed){
+        document.getElementById('voltage').innerHTML = 'Encoder Speed: ' + speed + ' m/s';
       });
-      //render second chart
-      socket.on('dataMsg2', function(chartOptions2){
-        var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
-        chart2.render();
+      //update distance box
+      socket.on('dataMsg4', function(distance){
+        document.getElementById('temp').innerHTML = 'Distance Traveled: ' + distance + ' m';
       });
-      //update thrid chart
-      socket.on('dataMsg3', function(chartOptions3){
-        var chart3 = new CanvasJS.Chart("chartContainer3", chartOptions3);
-        chart3.render();
+      //update alert box
+      socket.on('dataMsg5', function(alert){
+        document.getElementById('temp').innerHTML = alert;
       });
     });
 
     //Buttonssssssss
     const button1 = document.getElementById('button1');
     const button2 = document.getElementById('button2');
+    const button3 = document.getElementById('button3');
+    const button4 = document.getElementById('button4');
     //const paragraph = document.querySelector('p');
     
     button1.addEventListener('click', sendStartMesg);
     button2.addEventListener('click', sendStopMesg);
+    button3.addEventListener('click', sendSteerRightMesg);
+    button4.addEventListener('click', sendSteerLeftMesg);
     
     //sends start mesg 
     function sendStartMesg() {
@@ -122,6 +158,22 @@ EC444 Quest 3: Hurricane Box -->
         
         socket.emit('data2', { 
           buttondata: "Stop Buggy"
+        }); 
+    }
+
+    //send steer right mesg
+    function sendSteerRightMesg() {
+        
+        socket.emit('data3', { 
+          buttondata: "Steer Right"
+        }); 
+    }
+
+    //send steer left mesg
+    function sendSteerLeftMesg() {
+        
+        socket.emit('data4', { 
+          buttondata: "Steer Left"
         }); 
     }
 

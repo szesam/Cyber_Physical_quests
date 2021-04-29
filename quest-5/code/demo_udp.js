@@ -11,7 +11,7 @@ var app = require('express')();
 var http = require('http').Server(app);
 
 // initialize data structures to store sensor data
-var xaccel = [], yaccel = [], zaccel = [];
+var  speed = [], distance = [], alert = [];
 
 //Create acknowledge packet to send back to udp_client upon message received
 const msg = Buffer.from('Acknowledged');
@@ -38,27 +38,15 @@ var i = 0;
 function push_sensor_data(data)
 {
     data = data.toString();
-    data = data.split(",");
-    i = i + 1;
-    xaccel.push({
-		x: parseInt(i),
-		y: parseFloat(data[1]/9.81)
-	});
-	yaccel.push({
-		x: parseInt(i),
-		y: parseFloat(data[2]/9.81)
-	});
-	zaccel.push({
-		x: parseInt(i),
-		y: parseFloat(data[3]/9.81)
-    });
-	if (xaccel.length > 15) //number of data poitns visible at any time
-    {
-        xaccel.shift();
-        yaccel.shift();
-        zaccel.shift();
+	if(data == 'Alert') {
+		alert = data;
+	}
+	else{
+		data = data.split(",");
+		speed = data[2];
+		distance = data[3];
+	}
 
-    }
 }
 //Bind server to PI local address on router with port at 3333
 server.bind(3333,'192.168.1.126');
@@ -74,135 +62,29 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
-// xaccel chart format
-var chartOptions1 = {
-	title:{
-		text: "Acceleration in X",
-		fontSize: 18,
-	},
-	axisX: {
-		Prefix: "Seconds",
-		title: "Time(sec)",
-		interval: 1
-	},
-	axisY: {
-		maximum: 2,
-		title: "Gs",
-		includeZero: true,
-		suffix: "g",
-	},
-	legend: {
-		cursor: "pointer",
-		verticalAlign: "bottom",
-		horizontalAlign: "center",
-		dockInsidePlotArea: true,
-	},
-	toolTip: {
-		shared: true
-	},
-	data: [
-	{
-		name: "X acceleration",
-		type: "spline",
-		color: "#00FF00",
-		showInLegend: true,
-		dataPoints: xaccel,
-	}]
-
-};
-
-//chart for y accel format
-var chartOptions2 = {
-	title:{
-		text: "Acceleration in Y",
-		fontSize: 18,
-	},
-	axisX: {
-		Prefix: "Seconds",
-		title: "Time(sec)",
-		interval: 1
-	},
-	axisY:[
-	{
-		title: "Gs",
-		maximum: 2,
-		includeZero: true,
-		suffix: "g"
-	}],
-	legend: {
-		cursor: "pointer",
-		verticalAlign: "bottom",
-		horizontalAlign: "center",
-		dockInsidePlotArea: true,
-	},
-	toolTip: {
-		shared: true
-	},
-	data: [
-		{
-			name: "Y acceleration",
-			type: "spline",
-			markerType: "cross",
-			color: "#FF0000",
-			showInLegend: true,
-			dataPoints: yaccel,
-		}]
-
-};
-
-//chart for zaccel format
-var chartOptions3 = {
-	title:{
-		text: "Acceleration in Z",
-		fontSize: 18,
-	},
-	axisX: {
-		Prefix: "Seconds",
-		title: "Time(sec)",
-		interval: 1
-	},
-	axisY:[
-	{
-		title: "Gs",
-		maximum: 2,
-		includeZero: true,
-		suffix: "g"
-	}],
-	legend: {
-		cursor: "pointer",
-		verticalAlign: "bottom",
-		horizontalAlign: "center",
-		dockInsidePlotArea: true,
-	},
-	toolTip: {
-		shared: true
-	},
-	data: [
-		{
-			name: "Z acceleration",
-			type: "spline",
-			markerType: "cross",
-			color: "#0000FF",
-			showInLegend: true,
-			dataPoints: zaccel,
-		}]
-};
 
 // emit data every 1second
 setInterval(function(){
-	io.emit('dataMsg1', chartOptions1);
-	io.emit('dataMsg2', chartOptions2);
-	io.emit('dataMsg3',	chartOptions3);
+	// io.emit('dataMsg1', chartOptions1); //xaccel
+	// io.emit('dataMsg2', chartOptions2); //yaccel
+	io.emit('dataMsg3',	speed); //speed
+	io.emit('dataMsg4',	distance); //distance traveled
+	io.emit('dataMsg5',	alert); //when there is an object in the way send alert messge to web server
  }, 1000);
 
 //socket io creation. 
 
 var msg2;//second message to be sent to client to toggle LED 
+var msg3;
+var msg4;
+var msg5;
 io.on('connection', function(socket){
 	//console.log('a user connected');
-	io.emit('dataMsg1', chartOptions1);
-	io.emit('dataMsg2', chartOptions2);
-	io.emit('dataMsg3',	chartOptions3);
+	// io.emit('dataMsg1', chartOptions1);
+	// io.emit('dataMsg2', chartOptions2);
+	io.emit('dataMsg3',	speed);
+	io.emit('dataMsg4',	distance);
+	io.emit('dataMsg5',	alert);
     
     //send start car message to client 
     socket.on('data1', function (data) {
@@ -214,6 +96,20 @@ io.on('connection', function(socket){
     //send stop car message to client 
     socket.on('data2', function (data) {
         msg3 = Buffer.from(data.buttondata);
+        server.send(msg3, remote_port, remote_address);
+        console.log(msg3);
+    });
+
+	//send steer right car message to client 
+    socket.on('data3', function (data) {
+        msg4 = Buffer.from(data.buttondata);
+        server.send(msg3, remote_port, remote_address);
+        console.log(msg3);
+    });
+
+	//send steer left car message to client 
+    socket.on('data4', function (data) {
+        msg5 = Buffer.from(data.buttondata);
         server.send(msg3, remote_port, remote_address);
         console.log(msg3);
     });
