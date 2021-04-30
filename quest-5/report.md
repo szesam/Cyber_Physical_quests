@@ -122,7 +122,8 @@ Building on our solution, we can set up the LIDAR front sensor with the camera s
 <center><img src = "./images/top_view.PNG" width ="25%" > </center> 
 <center><img src = "./images/left_view.PNG" width ="25%" > </center> 
 <center><img src = "./images/right_view.PNG" width ="25%" > </center> 
-<center> <img src="./images/storyboard.png" width="25%" /></center>
+
+<center> <img src="./images/storyboard.png" width="100%" /></center>
 
 ## Supporting Artifacts
 - [Link to video demo](). Not to exceed 120s
@@ -152,8 +153,8 @@ Sources:
 - [Encoder](https://learn.sparkfun.com/tutorials/qrd1114-optical-detector-hookup-guide#example-circuit)
 - [Wheel Speed](http://whizzer.bu.edu/skills/wheel-speed)
 - [Lidar](http://whizzer.bu.edu/skills/lidar-lite)
-- [PID] (http://whizzer.bu.edu/skills/pid)
-- [i2c] (http://whizzer.bu.edu/skills/accel)
+- [PID](http://whizzer.bu.edu/skills/pid)
+- [i2c](http://whizzer.bu.edu/skills/accel)
 -----
 
 
