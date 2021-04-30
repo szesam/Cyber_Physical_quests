@@ -126,7 +126,7 @@ Building on our solution, we can set up the LIDAR front sensor with the camera s
 <center> <img src="./images/storyboard.png" width="100%" /></center>
 
 ## Supporting Artifacts
-- [Link to video demo](). Not to exceed 120s
+- [Link to video demo](https://drive.google.com/file/d/1eUK8kPNaGP0RNX6gPAL5K5lllR91Kokx/view?usp=sharing). Not to exceed 120s
 - [UDP Client](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-5/code/udp_client.c)
 - [UDP Server](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-5/code/demo_udp.js)
 - [HTML Code](https://github.com/BU-EC444/TeamRocket-Sze-Hurtado/blob/master/quest-5/code/index.html)
