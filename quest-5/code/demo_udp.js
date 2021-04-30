@@ -1,6 +1,8 @@
-/*Carmen Hurtado and Samuel Sze 03-05-2021 
-EC444 Quest 3: Hurricane Box 
-Code adapted from udp server example from node js */
+/*Quest 5: Cruise Control 
+Carmen Hurtado
+Samuel Sze
+Hazim Halim
+04-29-2021*/
 
 //Create UDP datagram and server
 var dgram = require('dgram');
@@ -11,7 +13,7 @@ var app = require('express')();
 var http = require('http').Server(app);
 
 // initialize data structures to store sensor data
-var  speed = [], distance = [], alert = [];
+var  speed = [], distance = [], alert = [], velocity = [];
 
 //Create acknowledge packet to send back to udp_client upon message received
 const msg = Buffer.from('Acknowledged');
@@ -33,18 +35,19 @@ server.on('message', function (message, remote) {
         push_sensor_data(message);
 });
 
-// i is x-axis
-var i = 0; 
+
 function push_sensor_data(data)
 {
     data = data.toString();
-	if(data == 'Alert') {
-		alert = data;
+	if(data.startsWith('Alert')) {
+		alert = "There is an Obstacle in the way!";
 	}
 	else{
 		data = data.split(",");
-		speed = data[2];
-		distance = data[3];
+        velocity = data[0]
+		speed = data[1];
+		distance = data[2];
+        alert = [];
 	}
 
 }
@@ -70,6 +73,7 @@ setInterval(function(){
 	io.emit('dataMsg3',	speed); //speed
 	io.emit('dataMsg4',	distance); //distance traveled
 	io.emit('dataMsg5',	alert); //when there is an object in the way send alert messge to web server
+    io.emit('dataMsg6',	velocity); //velocity from accelelomete
  }, 1000);
 
 //socket io creation. 
@@ -85,6 +89,7 @@ io.on('connection', function(socket){
 	io.emit('dataMsg3',	speed);
 	io.emit('dataMsg4',	distance);
 	io.emit('dataMsg5',	alert);
+    io.emit('dataMsg6',	velocity); //velocity from accelelomete
     
     //send start car message to client 
     socket.on('data1', function (data) {
@@ -97,26 +102,27 @@ io.on('connection', function(socket){
     socket.on('data2', function (data) {
         msg3 = Buffer.from(data.buttondata);
         server.send(msg3, remote_port, remote_address);
-        console.log(msg3);
+        console.log(String(msg3));
     });
 
 	//send steer right car message to client 
     socket.on('data3', function (data) {
         msg4 = Buffer.from(data.buttondata);
-        server.send(msg3, remote_port, remote_address);
-        console.log(msg3);
+        server.send(msg4, remote_port, remote_address);
+        console.log(data.buttondata);
     });
 
 	//send steer left car message to client 
     socket.on('data4', function (data) {
         msg5 = Buffer.from(data.buttondata);
-        server.send(msg3, remote_port, remote_address);
-        console.log(msg3);
+        server.send(msg5, remote_port, remote_address);
+        console.log(data.buttondata);
     });
 });
 
 
 
 // // keep channel open on ipaddress:3334
-http.listen(3334, function(){
-});
+http.listen(3000, function () {
+    console.log('app listening on port 3000!');
+  });

@@ -1,3 +1,9 @@
+/*Quest 5: Cruise Control 
+Carmen Hurtado
+Samuel Sze
+Hazim Halim
+04-29-2021*/
+
 static const uint16_t alphafonttable[] = 
     {
     0b0000000000000001, 0b0000000000000010, 0b0000000000000100,

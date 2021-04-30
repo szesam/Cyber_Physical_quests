@@ -112,16 +112,11 @@ Adaptive cruise control is an intelligent control system that automatically adju
 Building on our solution, we can set up the LIDAR front sensor with the camera setup to detect if our buggy is approaching another vehicle ahead. Specifically, PID control can be implemented with respect to the distance. If the distance is above a certain safe threshold, then the buggy can accelerate. If the distance is below the safe threshold, then the buggy will brake. This PID should have priorty with respect to the PID speed adjustment already present on the buggy. For example, if the PID distance tells the buggy to accelerate, the PID speed adjustment will be relaxed or paused, Vis Versa. Once within the safe distance threshold, the original PID speed will be set to a new setpoint.
 
 ## Sketches and Photos
-<center><img src="./images/ece444.png" width="25%" /></center>  
-<<<<<<< HEAD
-<center> <img src="./images/storyboard.png" width="25%" /></center>
-=======
 <center><img src = "./images/front_view.PNG" width ="25%" > </center> 
 <center><img src = "./images/top_view.PNG" width ="25%" > </center> 
 <center><img src = "./images/left_view.PNG" width ="25%" > </center> 
 <center><img src = "./images/right_view.PNG" width ="25%" > </center> 
->>>>>>> 54d244459359ed38eb8ec2149b6f1063150c90d9
-
+<center> <img src="./images/storyboard.png" width="25%" /></center>
 
 ## Supporting Artifacts
 - [Link to video demo](). Not to exceed 120s

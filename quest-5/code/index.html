@@ -1,5 +1,8 @@
-<!-- Carmen Hurtado and Samuel Sze 03-05-2021 
-EC444 Quest 3: Hurricane Box -->
+<!-- Quest 5: Cruise Control 
+Carmen Hurtado
+Samuel Sze
+Hazim Halim
+04-29-2021 -->
 
 <!doctype html>
 <html>
@@ -10,8 +13,9 @@ EC444 Quest 3: Hurricane Box -->
 
   <!-- Boxes for displaying voltage and temperature -->
   <div class="boxed">
-    <div id="speed" ></div> 
-    <div id="distance" ></div>
+    <div id="speed" ></div> <br>
+    <div id="distance" ></div><br>
+    <div id="velocity" ></div>
   </div>
   
   <!-- Video box for live camera video, src is ddns host and forwarded port -->
@@ -24,7 +28,6 @@ EC444 Quest 3: Hurricane Box -->
   
   <!--Buttons start, stop car-->
   <form>
-    <!-- <p id = "text1">Start Buggy</p> -->
     <input type="button" value="Start Buggy" id = "button1">
   </form>
   <form>
@@ -39,33 +42,40 @@ EC444 Quest 3: Hurricane Box -->
 
   <!-- Divs styles -->
   <style>
-    /* #text1{
-      position:absolute;
-      top: 1%;
-      left: 70%;
-      height: 50px;
-      font-size: 24px;
-      color: red;
-      display: inline-block;
-    } */
-    /* #camera_view {
-      transform: rotate(180deg);
-    } */
     #speed{
-      margin-left: 50px;
+      margin-left: 400px;
       font-size: 40px; 
       display: inline-block;
+      top: 50%;
+      left: 50%;
     }
     #distance{
       font-size: 40px; 
+      margin-left: 400px;
+      /* left: 60%;  */
       display: inline-block;
+      top: 50%;
+      left: 50%;
+      vertical-align: middle;
+    }
+    #velocity{
+      font-size: 40px; 
+      margin-left: 400px;
+      /* left: 60%;  */
+      display: inline-block;
+      top: 50%;
+      left: 50%;
     }
     #alert{
       font-size: 40px; 
+      margin-left: 400px;
       display: inline-block;
+      color: red;
     }
     #button1{
-      /* position:absolute; */
+      position:absolute;
+      margin-left: 200px;
+      margin-top: 120px;
       /* top: 1%;
       left: 60%; */
       width: 7%;
@@ -73,7 +83,9 @@ EC444 Quest 3: Hurricane Box -->
       font-size: 13px;
     }
     #button2{
-      /* position:absolute; */
+      position:absolute;
+      margin-left: 400px;
+      margin-top: 120px;
       /* top: 1%;
       left: 60%; */
       width: 7%;
@@ -81,7 +93,9 @@ EC444 Quest 3: Hurricane Box -->
       font-size: 13px;
     }
     #button3{
-      /* position:absolute; */
+      position:absolute;
+      margin-left: 600px;
+      margin-top: 120px;
       /* top: 1%;
       left: 60%; */
       width: 7%;
@@ -89,7 +103,9 @@ EC444 Quest 3: Hurricane Box -->
       font-size: 13px;
     }
     #button4{
-      /* position:absolute; */
+      position:absolute;
+      margin-left: 800px;
+      margin-top: 120px;
       /* top: 1%;
       left: 60%; */
       width: 7%;
@@ -98,10 +114,11 @@ EC444 Quest 3: Hurricane Box -->
     }
     .resp-iframe{
       /* justify-content: center; */
-      top: 54%;
-      left: 50%;
-      width:600px;
-      height:350px;
+      /* top: 54%; */
+      margin-left: 400px;
+      margin-top: 100px;
+      width:300px;
+      height:300px;
       transform: rotate(180deg);
     }
     </style>
@@ -109,27 +126,21 @@ EC444 Quest 3: Hurricane Box -->
   <script>
     var socket = io();
     $(function () {
-    //render first chart 
-      // socket.on('dataMsg1', function(chartOptions1){
-      //   var chart1 = new CanvasJS.Chart("chartContainer1", chartOptions1);
-      //   chart1.render();
-      // });
-      // //render second chart
-      // socket.on('dataMsg2', function(chartOptions2){
-      //   var chart2 = new CanvasJS.Chart("chartContainer2", chartOptions2);
-      //   chart2.render();
-      // });
       //update speed box
       socket.on('dataMsg3', function(speed){
-        document.getElementById('voltage').innerHTML = 'Encoder Speed: ' + speed + ' m/s';
+        document.getElementById('speed').innerHTML = 'Encoder Speed: ' + speed + ' m/s';
       });
       //update distance box
       socket.on('dataMsg4', function(distance){
-        document.getElementById('temp').innerHTML = 'Distance Traveled: ' + distance + ' m';
+        document.getElementById('distance').innerHTML = 'Distance Traveled: ' + distance + ' m';
       });
       //update alert box
       socket.on('dataMsg5', function(alert){
-        document.getElementById('temp').innerHTML = alert;
+        document.getElementById('alert').innerHTML = alert;
+      });
+      //update velocity box
+      socket.on('dataMsg6', function(velocity){
+        document.getElementById('velocity').innerHTML = "ADXL Velocity: " + velocity + " m/s";
       });
     });
 
