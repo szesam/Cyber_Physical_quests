@@ -110,7 +110,7 @@ Building on our solution, we can set up the LIDAR front sensor with the camera s
 
 ## Sketches and Photos
 <center><img src="./images/ece444.png" width="25%" /></center>  
-<center><img src = "./images/front_view.png" width ="25%" > </center> 
+<center><img src = "./images/front_view.PNG" width ="25%" > </center> 
 <center><img src = "./images/top_view.PNG" width ="25%" > </center> 
 <center><img src = "./images/left_view.PNG" width ="25%" > </center> 
 <center><img src = "./images/right_view.PNG" width ="25%" > </center> 
