@@ -10,7 +10,7 @@ Date: 2021-04-29
 
 Samuel | Carmen | Hazim
 -------|--------| -------
-<img src="images/samuel.jpg" width="" height="200" /> | <img src="images/carmen.jpg" width="" height = "200" />) 
+<img src="images/samuel.jpg" width="" height="200" /> | <img src="images/carmen.jpg" width="" height = "200" /> | <img src="images/hazim.png" width="" height="200" /> 
 
 In this quest we designed a semi-autonomous crawler which has the ability for cruise control using a PID controller as well as being controlled by a user through buttons on a web page. Our crawler has a variety of sensors and devices attached to achieve a more accurate manuver. We have attached the following onto the crawler: 
 
@@ -101,8 +101,6 @@ Additional devices used:
 1. Alphanumeric 14-seg display. 
 
 2. Raspberry Pi and Camera.
-
-Put photo here.
     
 ### Obstacle Avoidance
 
@@ -146,7 +144,12 @@ Building on our solution, we can set up the LIDAR front sensor with the camera s
 ## References
 
 Sources: 
-
-        https://en.wikipedia.org/wiki/Adaptive_cruise_control
+- [Adaptive Cruise Control](https://en.wikipedia.org/wiki/Adaptive_cruise_control)
+- [Encoder](https://learn.sparkfun.com/tutorials/qrd1114-optical-detector-hookup-guide#example-circuit)
+- [Wheel Speed](http://whizzer.bu.edu/skills/wheel-speed)
+- [Lidar](http://whizzer.bu.edu/skills/lidar-lite)
+- [PID] (http://whizzer.bu.edu/skills/pid)
+- [i2c] (http://whizzer.bu.edu/skills/accel)
 -----
+
 
