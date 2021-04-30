@@ -2,6 +2,7 @@
 Authors: Carmen Hurtado , Samuel Sze, Hazim Halim
 
 Date: 2021-04-29
+
 -----
 
 ## Summary
@@ -12,12 +13,19 @@ Samuel | Carmen | Hazim
 <img src="images/samuel.jpg" width="" height="200" /> | <img src="images/carmen.jpg" width="" height = "200" />) 
 
 In this quest we designed a semi-autonomous crawler which has the ability for cruise control using a PID controller as well as being controlled by a user through buttons on a web page. Our crawler has a variety of sensors and devices attached to achieve a more accurate manuver. We have attached the following onto the crawler: 
-    1) LIDAR Lite V3 facing front.
-    2) Optical Encoder in the back right wheel. 
-    3) Accelerometer on the top. 
-    4) IR Range Finder facing the right side.
-    5) RaspberryPi Camera facing the front. 
-    6) Alphanumeric Display on the left side.
+
+1) LIDAR Lite V3 facing front.
+
+2) Optical Encoder in the back right wheel. 
+
+3) Accelerometer on the top. 
+
+4) IR Range Finder facing the right side.
+    
+5) RaspberryPi Camera facing the front. 
+
+6) Alphanumeric Display on the left side.
+
 Once turned on the user must start the Buggy by pressing the START button. From here the autonomous part and the manual part can begin to take place. The crawler is programmed maintain a speed of 2 cm/sec using PID controller and the speed calculated using the Optical Encoder. We have also included an IR range sensor that aids in keeping the crawler's center course by steering it to the center when it goes lower than our setpoint of 50 cm. Our system also features obstacle avoidance with the front facing LIDAR sensor. If the LIDAR detects an obstacle within 1 meter or less, it will send a warning message to the webpage from where the user can avoid a collision through visual aid from the Raspberry Pi Camera. If any obstacle comes within 20 cm of the crawler, it will automatically stop as an emergency collision resposne.
 All communications between the Crawler and the user is done via a UDP protocol and Wifi connection. 
 
