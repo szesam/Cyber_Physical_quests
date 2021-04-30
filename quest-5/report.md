@@ -127,10 +127,13 @@ Building on our solution, we can set up the LIDAR front sensor with the camera s
 - ADXL343
 - RaspberryPi Camera
 - Alphanumeric Display
-- UDP 
+- UDP u
 - Node Js
 - SocketIO
 ## References
 
+Sources: 
+
+        https://en.wikipedia.org/wiki/Adaptive_cruise_control
 -----
 
