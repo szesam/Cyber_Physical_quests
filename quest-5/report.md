@@ -6,7 +6,10 @@ Date: 2021-04-29
 
 ## Summary
 **Contributors:**
+
 Samuel | Carmen | Hazim
+-------|--------| -------
+<img src="images/samuel.jpg" width="" height="200" /> | <img src="images/carmen.jpg" width="" height = "200" />) 
 
 In this quest we designed a semi-autonomous crawler which has the ability for cruise control using a PID controller as well as being controlled by a user through buttons on a web page. Our crawler has a variety of sensors and devices attached to achieve a more accurate manuver. We have attached the following onto the crawler: 
     1) LIDAR Lite V3 facing front.
