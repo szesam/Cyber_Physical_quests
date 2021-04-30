@@ -2,6 +2,12 @@
   Adapted I2C example code to work with the Adafruit ADXL343 accelerometer. Ported and referenced a lot of code from the Adafruit_ADXL343 driver code.
   ----> https://www.adafruit.com/product/4097
   Emily Lam, Aug 2019 for BU EC444
+
+  Quest 5: Cruise Control 
+  Carmen Hurtado
+  Samuel Sze
+  Hazim Halim
+  04-29-2021
 */
 
 /*=========================================================================

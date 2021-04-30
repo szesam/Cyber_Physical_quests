@@ -1,8 +1,3 @@
 # Code Readme
 
-Please describe what is in your code folder and subfolders. Make it
-easy for us to navigate this space.
-
-Also
-- Please provide your name and date in any code submitted
-- Indicate attributrion for any code you have adopted from elsewhere
+For this quest we have a main .c code file for the udp client side and a node js code file along with an html code file for the udp server side. As a helper we have 2 .h files. 
