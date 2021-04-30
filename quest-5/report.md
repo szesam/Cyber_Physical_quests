@@ -1,4 +1,4 @@
-# Quest Name
+# Cruise Control
 Authors: Carmen Hurtado , Samuel Sze, Hazim Halim
 
 Date: 2021-04-29
