@@ -101,6 +101,13 @@ Anytime the LIDAR detects an object that is within 1 meter of it, a warning mess
 If the user doesn't take action and the object is now within 30cm of the crawler, it will automatically stop and send another warning to the user. The crawler will remain still until the user chooses to steer clear of the obstacle.
 
 
+## Investigative Question: 
+
+### How would you change your solution if you were asked to provide ‘adaptive’ cruise control?
+Adaptive cruise control is an intelligent control system that automatically adjusts the vehicle speed to maintain a safe distance from vehicles ahead. The control is based on sensor information from ob-board sensors. 
+
+Building on our solution, we can set up the LIDAR front sensor with the camera setup to detect if our buggy is approaching another vehicle ahead. Specifically, PID control can be implemented with respect to the distance. If the distance is above a certain safe threshold, then the buggy can accelerate. If the distance is below the safe threshold, then the buggy will brake. This PID should have priorty with respect to the PID speed adjustment already present on the buggy. For example, if the PID distance tells the buggy to accelerate, the PID speed adjustment will be relaxed or paused, Vis Versa. Once within the safe distance threshold, the original PID speed will be set to a new setpoint.
+
 ## Sketches and Photos
 <center><img src="./images/ece444.png" width="25%" /></center>  
 <center> </center>
